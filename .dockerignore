@@ -1,0 +1,58 @@
+test-results
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/.prisma-client
+/build
+generated
+generated/*
+generated/prisma/*
+
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment and IDE files
+.env
+.env.*
+!.env.example
+.vscode/
+*.md
+
+# Logs and cache
+*.log
+.cache/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+.fuse*
+
+# Docker
+docker/
+
+# Data directories
+data/
+data/postgres/
+data/redis/
+*.db
+*.rdb
+
+# Git
+.git/
+.git
+**/.git/
+**/.git
+.gitignore
+.github/
+
+.vscode/
+
+e2e
+docker-compose-*.yml
+.ssh

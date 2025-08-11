@@ -1,0 +1,38 @@
+name: starter
+services:
+  postgres:
+    image: postgres:latest
+    container_name: starter-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: 'starter'
+    ports:
+      - '5432:5432'
+    volumes:
+      - starter_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: starter-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - starter_redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  starter_postgres_data:
+  starter_redis_data:
