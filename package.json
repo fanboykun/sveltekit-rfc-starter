@@ -39,6 +39,7 @@
 		"bits-ui": "^2.8.6",
 		"clsx": "^2.1.1",
 		"drizzle-kit": "^0.31.4",
+		"drizzle-seed": "^0.3.1",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
@@ -63,7 +64,6 @@
 	"dependencies": {
 		"arctic": "^3.7.0",
 		"drizzle-orm": "^0.40.0",
-		"drizzle-seed": "^0.3.1",
 		"ioredis": "^5.7.0",
 		"mode-watcher": "^1.1.0",
 		"pg": "^8.16.3",
