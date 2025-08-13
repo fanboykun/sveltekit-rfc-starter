@@ -11,6 +11,7 @@ test-results
 generated
 generated/*
 generated/prisma/*
+/volumes/*
 
 
 # Dependencies
