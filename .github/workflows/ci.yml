@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    name: Bun CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Svelte check
+        run: bun run check
+
+      - name: Prettier check
+        run: bunx prettier --check .
+
+      - name: Run ESLint on changed files
+        id: changed
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            src/**/*.js
+            src/**/*.ts
+            src/**/*.svelte
+
+    #   - name: ESLint on changed files
+    #     if: steps.changed.outputs.any_changed == 'true'
+    #     run: |
+    #       echo "Changed files:" ${{ steps.changed.outputs.all_changed_files }}
+    #       echo "${{ steps.changed.outputs.all_changed_files }}" | xargs -r bunx eslint --max-warnings=0

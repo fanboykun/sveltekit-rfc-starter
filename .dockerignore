@@ -22,6 +22,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+.windsurf
 .vscode/
 *.md
 
@@ -51,8 +52,6 @@ data/redis/
 **/.git
 .gitignore
 .github/
-
-.vscode/
 
 e2e
 docker-compose-*.yml
