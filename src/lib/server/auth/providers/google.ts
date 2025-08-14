@@ -10,12 +10,13 @@ import {
 	codeAndStateSchema,
 	type AuthorizeProps,
 	type AuthorizeResult,
-	type ClientSecret,
+	type ProviderConfig,
 	type GetAuthenticationUrlProps,
-	type Provider,
-	type ProviderConfig
+	type Provider
 } from '../instances/provider';
 import type { Cookies } from '@sveltejs/kit';
+// import type { AuthConfig } from '../instances/instance';
+import { dev } from '$app/environment';
 
 type GoogleUserClaim = {
 	iss: string;
@@ -34,9 +35,9 @@ type GoogleUserClaim = {
 };
 
 export class GoogleProvider implements Provider {
-	private config?: ProviderConfig;
+	// private config?: AuthConfig;
 
-	constructor(private secrets: ClientSecret) {}
+	constructor(private secrets: ProviderConfig) {}
 
 	getName() {
 		return 'google' as const;
@@ -46,15 +47,15 @@ export class GoogleProvider implements Provider {
 		return new Google(this.secrets.clientId, this.secrets.clientSecret, redirectUri);
 	}
 
-	setConfig(config: ProviderConfig) {
-		this.config = config;
-	}
+	// setConfig(config: AuthConfig) {
+	// 	this.config = config;
+	// }
 
 	getAuthenticationUrl(props: GetAuthenticationUrlProps): URL {
 		const instance = this.#getInstance(props.redirectUri);
 		const state = props.state || generateState();
 		const codeVerifier = generateCodeVerifier();
-		const scopes = ['openid', 'profile', 'email'];
+		const scopes = this.secrets.scopes || ['openid', 'profile', 'email'];
 		this.#setStateAndCodeVerifierCookies(props.cookie, state, codeVerifier);
 		const url = instance.createAuthorizationURL(state, codeVerifier, scopes);
 		return url;
@@ -72,6 +73,7 @@ export class GoogleProvider implements Provider {
 			const { code, codeVerifier, state } = codeAndState;
 
 			const tokens = await instance.validateAuthorizationCode(code, codeVerifier);
+			const refreshToken = tokens.refreshToken();
 			const accessToken = tokens.accessToken();
 			const idToken = tokens.idToken();
 			const user_info = decodeIdToken(idToken) as GoogleUserClaim;
@@ -80,7 +82,8 @@ export class GoogleProvider implements Provider {
 				success: true as const,
 				data: {
 					user: {
-						token: accessToken,
+						accessToken,
+						refreshToken,
 						name: user_info.name,
 						email: user_info.email,
 						picture: user_info.picture
@@ -112,19 +115,48 @@ export class GoogleProvider implements Provider {
 		}
 	}
 
+	async revokeToken(props: { redirectUri: string; token: string }) {
+		try {
+			const instance = this.#getInstance(props.redirectUri);
+			await instance.revokeToken(props.token);
+			return true;
+		} catch (e) {
+			if (e instanceof OAuth2RequestError) {
+				// Invalid authorization code, credentials, or redirect URI
+				console.error('OAuth2RequestError', e);
+				return false;
+			}
+			if (e instanceof ArcticFetchError) {
+				// Failed to call `fetch()`
+				console.error('ArcticFetchError', e);
+				return false;
+			}
+			// Parse error
+			console.error('Parse error', e);
+			return false;
+		}
+	}
+
 	#setStateAndCodeVerifierCookies(cookies: Cookies, state: string, codeVerifier: string) {
+		const cookieOpts = {
+			maxAge: 60 * 10, // 10 minutes in seconds
+			path: '/',
+			sameSite: 'lax',
+			httpOnly: true,
+			secure: !dev
+		} as const;
 		// store state as cookie
-		cookies.set('state', state, this.config!.cookie);
+		cookies.set('state', state, cookieOpts);
 		// store code verifier as cookie
-		cookies.set('codeVerifier', codeVerifier, this.config!.cookie);
+		cookies.set('codeVerifier', codeVerifier, cookieOpts);
 	}
 
 	#deleteStateAndCodeVerifierCookies(cookies: Cookies) {
 		cookies.delete('state', {
-			path: this.config!.cookie.path
+			path: '/'
 		});
 		cookies.delete('codeVerifier', {
-			path: this.config!.cookie.path
+			path: '/'
 		});
 	}
 

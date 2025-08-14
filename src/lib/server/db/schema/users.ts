@@ -4,7 +4,7 @@ import { authProviderEnum, userRoleEnum } from './enums';
 export const users = pgTable(
 	'users',
 	{
-		id: uuid('id').primaryKey(),
+		id: uuid('id').defaultRandom().primaryKey(),
 		email: text('email').notNull().unique(),
 		image: text('image'),
 		name: text('name').notNull(),

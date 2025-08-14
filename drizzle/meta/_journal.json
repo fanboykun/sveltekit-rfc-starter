@@ -8,6 +8,13 @@
       "when": 1755120382010,
       "tag": "0000_minor_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1755153811014,
+      "tag": "0001_giant_mariko_yashida",
+      "breakpoints": true
     }
   ]
 }

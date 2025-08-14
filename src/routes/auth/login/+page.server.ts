@@ -1,17 +1,12 @@
-import { auth } from '$lib/server/auth/auth';
-import type { Actions } from './$types';
+import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
+import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 
-export const actions: Actions = {
-	handleLogin: async ({ cookies, url, locals }) => {
-		if (locals.user) return redirect(302, '/');
-		const state = url.search;
-		const callbackUri = `${url.origin}/auth/callback/google`;
-		const authenticationUrl = auth.getAuthenticationUrl('google', {
-			cookie: cookies,
-			redirectUri: callbackUri,
-			state
-		});
-		return redirect(302, authenticationUrl);
-	}
+export const load: PageServerLoad = ({ locals: { user }, url }) => {
+	if (user) return redirect(302, '/');
+	const shouldMockLogin = env.MOCK_LOGIN === 'true' || dev;
+
+	const state = url.search;
+	return { shouldMockLogin, state };
 };

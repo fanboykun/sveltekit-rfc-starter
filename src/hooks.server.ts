@@ -1,7 +1,7 @@
 import { sequence } from '@sveltejs/kit/hooks';
 import { type Handle, type ServerInit } from '@sveltejs/kit';
 import redis from '$lib/server/redis/redis';
-import { auth } from '$lib/server/auth/auth';
+import { auth } from '$lib/server/auth';
 
 export const init: ServerInit = async () => {
 	await redis.connect();
@@ -13,7 +13,6 @@ const setTraceId: Handle = async ({ resolve, event }) => {
 
 const setUser: Handle = async ({ resolve, event }) => {
 	const session = await auth.session.getSession({
-		redis,
 		cookies: event.cookies
 	});
 	if (!session) return resolve(event);

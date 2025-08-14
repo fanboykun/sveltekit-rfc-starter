@@ -1,18 +1,15 @@
 import type { Cookies } from '@sveltejs/kit';
 import z4 from 'zod/v4';
+// import type { AuthConfig } from './instance';
 
 export const providers = ['google'] as const;
 
 export type ProviderList = { [K in (typeof providers)[number]]: Provider };
 
-export type ClientSecret = {
+export interface ProviderConfig {
 	clientId: string;
 	clientSecret: string;
-};
-
-export interface ProviderConfig {
-	session: SessionConfig;
-	cookie: CookieConfig;
+	scopes?: string[];
 }
 
 export type SessionConfig = {
@@ -32,7 +29,8 @@ export type UserFromProvider = {
 	email: string;
 	name: string;
 	picture: string;
-	token: string;
+	accessToken: string;
+	refreshToken: string;
 };
 export type GetAuthenticationUrlProps = {
 	cookie: Cookies;
@@ -57,7 +55,7 @@ export const codeAndStateSchema = z4.object({
 
 export interface Provider {
 	getName(): (typeof providers)[number];
-	setConfig(config: ProviderConfig): void;
+	// setConfig(config: AuthConfig): void;
 	getAuthenticationUrl(props: GetAuthenticationUrlProps): URL;
 	getAuthenticatedUser(props: AuthorizeProps): Promise<AuthorizeResult>;
 }
