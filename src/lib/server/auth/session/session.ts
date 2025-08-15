@@ -2,9 +2,12 @@ import redis from '$lib/server/redis/redis';
 import type { Cookies } from '@sveltejs/kit';
 import { type SessionManager, type SessionPayload } from './manager';
 import type { AuthConfig } from '../instances/instance';
+import { BaseSession } from './base';
 
-export class Session implements SessionManager {
-	constructor(private config: AuthConfig) {}
+export class Session extends BaseSession implements SessionManager {
+	constructor(private config: AuthConfig) {
+		super(config.secret);
+	}
 
 	#setKey(sessionId: string) {
 		return `${this.config.sessionName}:${sessionId}` as const;
@@ -26,7 +29,8 @@ export class Session implements SessionManager {
 			const prefixedKey = this.#setKey(sessionId);
 			const str = JSON.stringify(data);
 			await client.set(prefixedKey, str, 'EX', redisTtl);
-			cookies.set(this.config.sessionName, sessionId, {
+			const signed = this.signCookie(sessionId);
+			cookies.set(this.config.sessionName, signed, {
 				...this.config.cookieOptions,
 				expires: cookieExpiresAt
 			});
@@ -44,8 +48,15 @@ export class Session implements SessionManager {
 		cookies: Cookies;
 	}): Promise<T | null> {
 		try {
-			const sessionId = cookies.get(this.config.sessionName);
-			if (!sessionId) return null;
+			const session = cookies.get(this.config.sessionName);
+			if (!session) return null;
+			const verfified = this.verifyCookie(session);
+			if (!verfified.valid) {
+				// delete cookie
+				cookies.delete(this.config.sessionName, { path: '/' });
+				return null;
+			}
+			const { value: sessionId } = verfified;
 			const client = await redis.getClient();
 			const prefixedKey = this.#setKey(sessionId);
 			const value = await client.get(prefixedKey);
@@ -60,8 +71,15 @@ export class Session implements SessionManager {
 
 	async deleteSession({ cookies }: { cookies: Cookies }) {
 		try {
-			const sessionId = cookies.get(this.config.sessionName);
-			if (!sessionId) return false;
+			const session = cookies.get(this.config.sessionName);
+			if (!session) return false;
+			const verfified = this.verifyCookie(session);
+			if (!verfified.valid) {
+				// delete cookie
+				cookies.delete(this.config.sessionName, { path: '/' });
+				return false;
+			}
+			const { value: sessionId } = verfified;
 			cookies.delete(this.config.sessionName, { path: '/' });
 			const client = await redis.getClient();
 			const prefixedKey = this.#setKey(sessionId);

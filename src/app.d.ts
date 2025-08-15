@@ -1,4 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
+
+import type { User } from '$lib/server/db/models/user';
+
 // for information about these interfaces
 declare global {
 	namespace App {
@@ -8,9 +11,7 @@ declare global {
 		}
 		interface Locals {
 			traceId: string;
-			user?: {
-				id: string;
-			};
+			user: User | null;
 		}
 		// interface PageData {}
 		// interface PageState {}

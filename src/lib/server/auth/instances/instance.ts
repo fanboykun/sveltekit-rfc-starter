@@ -5,6 +5,7 @@ import { Session } from '../session/session';
 import type { AuthorizeProps, GetAuthenticationUrlProps, Provider, ProviderList } from './provider';
 
 export type AuthConfig = {
+	secret?: string;
 	origin?: string;
 	baseCallbackPathname?: 'auth/callback' | (string & {});
 	sessionName: string;
@@ -43,6 +44,7 @@ export class AuthInstance<T extends AtLeastOne<ProviderList>> {
 
 	#initConfig(config?: Partial<AuthConfig>): Required<AuthConfig> {
 		return deepMerge(config ?? {}, {
+			secret: process.env.SECRET!,
 			origin: process.env.ORIGIN!,
 			baseCallbackPathname: 'auth/callback' as const,
 			sessionName: 'auth_session',
