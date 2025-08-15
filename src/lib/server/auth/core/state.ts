@@ -22,11 +22,11 @@ export abstract class State {
 		}
 	}
 
-	setState(cookies: Cookies, state: string, codeVerifier: string) {
+	setState(cookies: Cookies, state: string, codeVerifier: string | null) {
 		// store state as cookie
 		cookies.set(this.stateName, state, this.cookieOpts);
 		// store code verifier as cookie
-		cookies.set(this.codeVerifierName, codeVerifier, this.cookieOpts);
+		if (codeVerifier) cookies.set(this.codeVerifierName, codeVerifier, this.cookieOpts);
 	}
 
 	getState(url: URL, cookies: Cookies) {
@@ -35,7 +35,7 @@ export abstract class State {
 		const storedState = cookies.get(this.stateName);
 		const codeVerifier = cookies.get(this.codeVerifierName);
 
-		if (!code || !state || !codeVerifier || !storedState) return null;
+		if (!code || !state || !storedState) return null;
 		if (state !== storedState) return null;
 
 		this.deleteState(cookies);

@@ -3,7 +3,7 @@ import {
 	decodeIdToken,
 	generateCodeVerifier,
 	generateState,
-	Google,
+	GitHub,
 	OAuth2RequestError
 } from 'arctic';
 import {
@@ -43,17 +43,17 @@ export class GithubProvider extends State implements Provider {
 	}
 
 	#getInstance(redirectUri: string) {
-		return new Google(this.secrets.clientId, this.secrets.clientSecret, redirectUri);
+		return new GitHub(this.secrets.clientId, this.secrets.clientSecret, redirectUri);
 	}
 
 	getAuthenticationUrl(props: GetAuthenticationUrlProps): URL {
 		const instance = this.#getInstance(props.redirectUri);
 		const state = props.state || generateState();
 		const codeVerifier = generateCodeVerifier();
-		const scopes = this.secrets.scopes || ['openid', 'profile', 'email'];
+		const scopes = this.secrets.scopes || ['read:user', 'user:email'];
 		// this.#setStateAndCodeVerifierCookies(props.cookie, state, codeVerifier);
 		this.setState(props.cookie, state, codeVerifier);
-		const url = instance.createAuthorizationURL(state, codeVerifier, scopes);
+		const url = instance.createAuthorizationURL(state, scopes);
 		return url;
 	}
 
@@ -67,9 +67,9 @@ export class GithubProvider extends State implements Provider {
 					success: false as const,
 					error: 'Invalid code or state'
 				};
-			const { code, codeVerifier, state } = codeAndState;
+			const { code, state } = codeAndState;
 
-			const tokens = await instance.validateAuthorizationCode(code, codeVerifier);
+			const tokens = await instance.validateAuthorizationCode(code);
 			const refreshToken = tokens.hasRefreshToken() ? tokens.refreshToken() : null;
 			const accessToken = tokens.accessToken();
 			const idToken = tokens.idToken();
@@ -116,7 +116,7 @@ export class GithubProvider extends State implements Provider {
 	async revokeToken(props: { redirectUri: string; token: string }) {
 		try {
 			const instance = this.#getInstance(props.redirectUri);
-			await instance.revokeToken(props.token);
+			await instance.refreshAccessToken(props.token);
 			return true;
 		} catch (e) {
 			if (e instanceof OAuth2RequestError) {
