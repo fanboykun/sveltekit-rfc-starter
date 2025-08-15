@@ -6,13 +6,22 @@ import type { AuthProviderType } from '$lib/shared/enums/enum';
 
 export const GET = async (event: RequestEvent) => {
 	if (event.locals.user) return redirect(302, '/');
-	const provider = event.params.rest as AuthProviderType; // we already match the params, see params/auth_provider.ts
+
+	/**
+	 * we already match the params, see params/auth_provider.ts
+	 * but however we should always compare it to the actual available providers
+	 */
+	const provider = event.params.rest as AuthProviderType;
+	if (!auth.getAvailableProviders().includes(provider))
+		return redirect(302, '/auth/login?error=Invalid provider');
+
 	const redirectUri = `${event.url.origin}/auth/callback/${provider}`;
 	const authorizationResult = await auth.getAuthenticatedUser(provider, {
 		cookies: event.cookies,
 		url: event.url,
 		redirectUri
 	});
+
 	if (!authorizationResult.success) {
 		return redirect(302, `/auth/login?error=${authorizationResult.error}`);
 	}
@@ -31,7 +40,6 @@ export const GET = async (event: RequestEvent) => {
 	const userId = user.id;
 	await auth.session.setSession({
 		cookies: event.cookies,
-		sessionId: data.user.accessToken,
 		data: {
 			userId,
 			ipAddress: event.getClientAddress() || '0.0.0.0',

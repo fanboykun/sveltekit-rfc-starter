@@ -31,15 +31,15 @@ type GoogleUserClaim = {
 	exp: number;
 };
 
-export class GoogleProvider extends State implements Provider {
-	static name = () => 'google' as const;
+export class GithubProvider extends State implements Provider {
+	static name = () => 'github' as const;
 
 	constructor(private secrets: ProviderConfig) {
 		super();
 	}
 
 	getName() {
-		return 'google' as const;
+		return 'github' as const;
 	}
 
 	#getInstance(redirectUri: string) {

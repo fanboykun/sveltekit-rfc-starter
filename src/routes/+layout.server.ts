@@ -1,14 +1,15 @@
-import { type LayoutServerLoad } from './$types';
+import type { LayoutServerLoadEvent } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals }) => {
+export const load = async ({ locals }: LayoutServerLoadEvent) => {
 	const { user } = locals;
-	if (!user) return { user: null };
-	return {
-		user: {
-			name: user.name,
-			email: user.email,
-			image: user.image,
-			userRole: user.userRole
-		}
-	};
+	const safeUser: SafeUser | null = user
+		? {
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				image: user.image,
+				userRole: user.userRole
+			}
+		: null;
+	return { user: safeUser };
 };

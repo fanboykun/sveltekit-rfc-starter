@@ -8,7 +8,7 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
-/volumes/*
+/docker/volumes/*
 
 # OS
 .DS_Store

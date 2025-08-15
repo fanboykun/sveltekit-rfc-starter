@@ -1,6 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
 import type { User } from '$lib/server/db/models/user';
+import type { UserRoleType } from '$lib/shared/enums/enum';
 
 // for information about these interfaces
 declare global {
@@ -8,6 +9,7 @@ declare global {
 		interface Error {
 			message: string;
 			traceId: string;
+			error?: Record<string, string[] | undefined>;
 		}
 		interface Locals {
 			traceId: string;
@@ -17,6 +19,13 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+	export type SafeUser = {
+		id: string;
+		name: string;
+		email: string;
+		image: string | null;
+		userRole: UserRoleType;
+	};
 }
 
 export {};

@@ -5,27 +5,6 @@ import { auth } from '$lib/server/auth';
 import { dev } from '$app/environment';
 import { Models } from '$lib/server/db/models';
 
-export const handleLogin = form(async (data) => {
-	const { locals, url, cookies } = getRequestEvent();
-	if (locals.user) return redirect(302, '/');
-
-	const validated = z.object({ state: z.string().optional() }).safeParse(Object.fromEntries(data));
-	if (!validated.success)
-		return fail(400, {
-			message: 'Invalid payload',
-			errors: validated.error.flatten().fieldErrors
-		});
-
-	const state = validated.data.state;
-	const callbackUri = `${url.origin}/auth/callback/google`;
-	const authenticationUrl = auth.getAuthenticationUrl('google', {
-		cookie: cookies,
-		redirectUri: callbackUri,
-		state
-	});
-	return redirect(302, authenticationUrl);
-});
-
 export const handleMockLogin = form(async (data) => {
 	const { locals, cookies, getClientAddress, request } = getRequestEvent();
 
@@ -54,7 +33,7 @@ export const handleMockLogin = form(async (data) => {
 		provider: 'google',
 		accessToken
 	});
-	if (!user?.length)
+	if (!user)
 		return fail(400, {
 			message: 'Failed to create user'
 		});
@@ -63,7 +42,7 @@ export const handleMockLogin = form(async (data) => {
 		cookies: cookies,
 		sessionId: accessToken,
 		data: {
-			userId: user[0].id,
+			userId: user.id,
 			ipAddress: getClientAddress() || '0.0.0.0',
 			userAgent: request.headers.get('user-agent') || 'Unknown'
 		}
@@ -84,3 +63,23 @@ export const handleLogout = command(async () => {
 	await auth.session.deleteSession({ cookies });
 	return { success: true };
 });
+
+export const handleLogin = command(
+	z.object({
+		state: z.string().optional(),
+		provider: z.enum(auth.getAvailableProviders()).default('google')
+	}),
+	async ({ state, provider }) => {
+		const { locals, cookies, url } = getRequestEvent();
+		if (locals.user) return fail(400, { message: 'User already logged in' });
+		const callbackUri = `${url.origin}/auth/callback/${provider}`;
+		const authenticationUrl = auth.getAuthenticationUrl(provider, {
+			cookie: cookies,
+			redirectUri: callbackUri,
+			state
+		});
+		return {
+			redirect: authenticationUrl.toString()
+		};
+	}
+);
