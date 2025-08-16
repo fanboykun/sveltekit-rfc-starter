@@ -41,57 +41,99 @@ This template follows a conventional SvelteKit layout and keeps server-only logi
 
 - `src/routes` — app routes (pages, endpoints)
 - `src/lib` — shared code (components, utils, types)
-- `src/lib/server` — server-only modules (DB, Redis, auth, remote functions)
-- `src/lib/server/remote` — Remote Functions definitions
+- `src/lib/server` — server-only modules (DB, Redis, auth)
+- `src/lib/remotes` — Remote Functions definitions
 - `src/lib/server/auth` — Arctic OAuth setup (providers, session utils)
 - `src/lib/db` — Drizzle schema and client
 - `drizzle/` — migration files
 - `static/` — static assets
 
+### Detailed Project Structure
+
+```text
+.
+├─ src/
+│  ├─ routes/                           # Pages & endpoints
+│  │  └─ auth/
+│  │     └─ callback/[...rest=auth_provider]/  # OAuth callback route (param matcher)
+│  ├─ lib/
+│  │  ├─ components/                    # UI components (shadcn-svelte, etc.)
+│  │  │  └─ ui/button/                  # Example: Button component
+│  │  ├─ shared/
+│  │  │  └─ utils/shadcn.ts             # shadcn utilities (aliased as "utils")
+│  │  ├─ remotes/
+│  │  │  └─ auth/auth.remote.ts         # Remote Functions for auth (login/logout)
+│  │  ├─ server/
+│  │  │  ├─ auth/                       # Auth module (Arctic + sessions)
+│  │  │  │  ├─ core/                    # Auth core types, instance, base session
+│  │  │  │  ├─ providers/               # Google/GitHub providers
+│  │  │  │  └─ sessions/redis-session.ts# Redis session manager
+│  │  │  ├─ db/                         # Drizzle client & models
+│  │  │  └─ redis/                      # Redis client
+│  │  └─ params/                        # Route param matchers (e.g., auth_provider)
+│  ├─ hooks.server.ts                   # Init + set user in locals from session
+│  └─ app.d.ts                          # App Locals/types
+├─ drizzle/                              # SQL migrations
+├─ docker/
+│  └─ docker-compose.dev.yml            # Postgres + Redis for local dev
+├─ static/                               # Static assets
+├─ components.json                       # shadcn-svelte config (aliases)
+├─ Makefile                              # Docker helpers (make up/down/dev/...)
+├─ .env.example                          # Example env vars (optional)
+└─ README.md                             # This file
+```
+
 Note: exact folders may evolve; the separation between client-safe and server-only code is intentional to keep secrets and heavy deps off the client.
 
 ## Prerequisites
 
-- Node.js 18+ (LTS recommended)
-- PostgreSQL 14+ (local or managed)
-- Redis 6+ (local or managed)
+- JavaScript runtime: Bun (recommended) or Node.js 18+
+- Docker Desktop/Engine: required for local Postgres and Redis via Compose
+
+You do NOT need to install PostgreSQL or Redis locally; this starter runs them in Docker for you.
 
 ## Quick Start
+
+First time setup (build containers once, start services, and run the app):
 
 ```bash
 git clone <this-repo-url> my-app
 cd my-app
-npm install   # or pnpm i / yarn
-cp .env.example .env
-# fill in environment variables (see below)
+bun install                 # package manager is Bun (use `bun` for scripts)
+cp .env.example .env        # then fill in environment variables (see below)
 
-# Database: generate and run migrations
-npm run db:generate
-npm run db:migrate
+# Build service images (Postgres, Redis) and create containers
+make build
 
-# Start dev server
-npm run dev
+# Start Postgres & Redis, then run the app (Bun by default)
+make dev
 ```
 
-Then open http://localhost:5173 (or the port shown in your terminal).
+Open http://localhost:5173 (or the port printed in your terminal).
 
 ## Local Development (Docker + Makefile)
 
-This template ships with Docker-based local services and a Makefile for convenience.
-
-- Compose file: `docker/docker-compose.dev.yml`
-- Services: PostgreSQL (port 5432), Redis (port 6379)
-
-Helpful Make targets:
+Start here:
 
 ```bash
-make up         # start Postgres & Redis in the background
-make down       # stop and remove containers
-make restart    # restart containers
-make logs       # follow logs for all services
-make redis-flush# flush all Redis data (dev only)
-make check      # ensure required containers exist and are running
-make dev        # ensure services are up, then run the app (uses Bun by default)
+make dev
+```
+
+The `dev` target will:
+
+- Ensure required containers exist and are running (`make check`)
+- Spin up Postgres (5432) and Redis (6379) via docker-compose
+- Start the SvelteKit dev server using Bun (configured in the Makefile)
+
+Other useful targets:
+
+```bash
+make build       # build service images (first run or when docker files change)
+make up          # start Postgres & Redis in the background
+make down        # stop and remove containers
+make restart     # restart containers
+make logs        # follow logs for all services
+make redis-flush # flush all Redis data (dev only)
 ```
 
 Suggested local env values when using Docker services:
@@ -143,73 +185,104 @@ Use Redis for:
 - Caching expensive queries
 - Background job queues
 
-Create a single connection in `src/lib/server/redis.ts` and reuse it across server modules.
+Create a single connection in `src/lib/server/redis/redis.ts` and reuse it across server modules.
 
-## Authentication with Arctic (project-specific)
+## Authentication with Arctic
 
-Arctic provides secure OAuth flows with state, nonce, and PKCE where supported. This starter wraps Arctic in a small auth module with providers and a Redis-backed session manager.
+This project implements OAuth using the Arctic library (OAuth 2.0/OpenID; state, nonce, and PKCE where supported). For Arctic docs, see: https://arcticjs.dev/
 
-Auth module structure:
+Why this approach (and not Better Auth):
 
-- `src/lib/server/auth/index.ts` — AuthInstance wiring (providers, session manager, config)
-- `src/lib/server/auth/core/*` — core types and BaseSession utilities
-- `src/lib/server/auth/providers/{google,github}.ts` — Arctic provider adapters
-- `src/lib/server/auth/sessions/redis-session.ts` — Redis session manager
-- `src/lib/remotes/auth/auth.remote.ts` — remote functions: `handleLogin`, `handleLogout`, `handleMockLogin`
-- `src/params/auth_provider.ts` — param matcher for provider segments
-- `src/hooks.server.ts` — loads `event.locals.user` from Redis session
+- Full control over auth and business logic; no third-party framework taking over your app flow
+- Session storage in Redis for durability, revocation, and cross-instance scaling
 
-Session details:
+Implementation overview:
 
-- Cookie name: `auth_session`
-- Lifetime: 604800 seconds (7 days)
-- Cookie options: `httpOnly`, `sameSite=lax`, `secure` in production
-- Storage: Redis, key pattern: `auth_session:<sessionId>`
+- Providers: `src/lib/server/auth/providers/{google,github}.ts`
+- Core & wiring: `src/lib/server/auth/core/*`, `src/lib/server/auth/index.ts`
+- Sessions: `src/lib/server/auth/sessions/redis-session.ts` (signed cookie + Redis)
+- Remote functions: `src/lib/remotes/auth/auth.remote.ts` (login/logout)
+- Param matcher: `src/params/auth_provider.ts`
+- Locals: `src/hooks.server.ts` (loads `event.locals.user` from session)
 
-Routes and flow in this repo:
+Customize or extend:
 
-1. Start login: call remote `auth.handleLogin` with `{ provider, state? }`
-   - Builds callback: `${origin}/auth/callback/<provider>`
-   - Returns `redirect` URL to the provider
-2. OAuth callback: handled at `/auth/callback/<provider>`
-   - Implemented using a param matcher at `src/routes/auth/callback/[...rest=auth_provider]/`
-   - Provider validates code/state (and PKCE where applicable), returns user claims
-   - App upserts user, creates a Redis session, and sets the signed cookie
-3. Logout: call remote `auth.handleLogout` to clear Redis state and delete cookie
+- Add a provider: create `src/lib/server/auth/providers/<provider>.ts`, export it, and register in `src/lib/server/auth/index.ts`; set `<PROVIDER>_CLIENT_ID/_SECRET` envs
+- Swap session store: implement a new session manager (extend BaseSession) and wire it in `index.ts`
+- Adjust guards: add/modify route guards or checks where you call remote functions or in hooks
+- Tune cookies: adjust cookie options and TTL in the session manager if your deployment needs differ
 
-Adding a provider:
+Flow in this repo (simplified):
 
-- Add env vars: `<PROVIDER>_CLIENT_ID` and `<PROVIDER>_CLIENT_SECRET`
-- Create `src/lib/server/auth/providers/<provider>.ts` implementing the Provider interface
+1. `auth.handleLogin` builds provider URL with callback `${origin}/auth/callback/<provider>` and redirects
+2. Callback validates state/nonce (and PKCE if applicable), maps user, upserts DB, issues Redis-backed session cookie
+3. `auth.handleLogout` clears Redis state and deletes cookie
+
+Refer to Arctic docs for provider specifics and advanced flows.
+
+### Security notes (recommended)
+
+- Always run behind HTTPS in production; set `secure` cookies and appropriate `SameSite`
+- Cookies: `httpOnly`, `sameSite=lax`, `secure` (prod); short TTLs for sensitive cookies
+- Rotate `AUTH_SECRET` if compromised; invalidate sessions in Redis on rotation
+- Keep provider scopes minimal; validate `state`/`nonce` and enforce PKCE where supported
+- Rate-limit auth endpoints and remote functions that touch auth/session
+
+### Create, add, and register a new OAuth provider
+
+1. Prepare credentials and callback
+
+- Create an app on the provider dashboard
+- Set Redirect URI to `${ORIGIN}/auth/callback/<provider>` (example: `http://localhost:5173/auth/callback/myprovider`)
+- Collect `<PROVIDER>_CLIENT_ID` and `<PROVIDER>_CLIENT_SECRET` and add them to `.env`
+
+2. Create the provider adapter
+
+- File: `src/lib/server/auth/providers/<provider>.ts`
+- Implement the Provider adapter using Arctic (configure scopes as needed) and map the provider profile to your internal user shape
+
+3. Export and register
+
 - Export it in `src/lib/server/auth/providers/index.ts`
-- Register it in `src/lib/server/auth/index.ts`
+- Register it in `src/lib/server/auth/index.ts` (see example above)
+- Add `<provider>` to the param matcher in `src/params/auth_provider.ts` so callbacks are accepted
 
-See https://arcticjs.dev/ for full API and examples.
+4. Add UI and test
+
+- Add a "Sign in with <Provider>" button that calls the login remote with `{ provider: '<provider>' }`
+- Run `make dev`, complete the OAuth flow, and confirm a session is created
+
+Notes:
+
+- Choose minimal scopes; request extra scopes only when necessary
+- If the provider returns email unverified or missing, consider fallbacks or additional API calls
+- Keep error handling explicit; log and surface a generic message to the user
+
+### Swap the session manager
+
+You can replace Redis-backed sessions with your own storage by implementing a new manager.
+
+Steps:
+
+1. Implement a manager
+   - Create `src/lib/server/auth/sessions/<name>-session.ts`
+   - Extend `BaseSession` and implement: `getSession`, `setSession`, `deleteSession`
+   - Respect cookie settings from `BaseSession` (name, `httpOnly`, `sameSite`, `secure`)
+2. Wire it up
+   - In `src/lib/server/auth/index.ts`, import your manager and pass an instance to `AuthInstance`
+   - Adjust env vars as needed (e.g., connection strings)
+3. Migrate data (if needed)
+   - If changing stores in production, consider a short dual-read period or invalidate old sessions
 
 ## Remote Functions
 
-Remote Functions let you call server code directly from the client with type-safety and without exposing endpoints manually.
+We use SvelteKit Remote Functions to call server code from the client safely and with types, without hand-rolling endpoints.
 
-Conventions in this template:
+- Why: strong typing, automatic serialization, origin/auth enforcement, smaller client surface.
+- Where: `src/lib/remotes/*` (server-only code that never ships to the browser).
+- How: invoked via SvelteKit’s built-in remote-call mechanism; not exposed as public REST routes.
 
-- Define functions under `src/lib/server/remote/*`
-- Keep them small, single-purpose, and auth-aware
-- Only import these from client code through SvelteKit’s remote-call mechanism
-
-Example (conceptual):
-
-```ts
-// src/lib/server/remote/user.ts
-export async function getProfile() {
-	/* server-only, checks session, queries DB */
-}
-
-// src/routes/(app)/profile/+page.svelte
-// call the remote function; SvelteKit handles transport and types
-// const profile = await remote(user.getProfile)()
-```
-
-Refer to `.windsurf/docs/sveltekit.txt` for SvelteKit 2 Remote Functions details.
+See `.windsurf/docs/sveltekit.txt` for a concise reference to SvelteKit 2 Remote Functions.
 
 ## UI: Tailwind v4 + shadcn-svelte
 
@@ -220,62 +293,6 @@ Usage:
 
 - Add components via shadcn-svelte CLI
 - Keep styles in `src/app.css` and component-level styles minimal
-
-## Scripts
-
-Common scripts you’ll find or add:
-
-- `dev` — start dev server
-- `build` — build for production
-- `preview` — preview built app
-- `lint` / `format` — code quality
-- `db:generate` / `db:migrate` / `db:studio` — Drizzle workflows
-- `docker:up` / `docker:down` — compose up/down (if using Docker)
-
-Check `package.json` for the authoritative list.
-
-## Docker (optional but recommended)
-
-Containerize for parity across environments.
-
-- App image: multi-stage Node build
-- Services: Postgres, Redis via `docker-compose.yml`
-- Volumes for DB data
-
-See `.windsurf/docs/docker.txt` for a comprehensive Docker reference and examples.
-
-## Security Notes
-
-- Never expose secrets to the client; keep them in server modules and env vars
-- Use HTTPS in production; set secure cookies and proper `SameSite`
-- Validate OAuth state/nonce and rotate `SESSION_SECRET` if leaked
-- Apply least-privilege DB roles and create necessary indexes
-- Rate-limit sensitive Remote Functions and auth routes
-
-## Deployment
-
-Choose one:
-
-- Vercel/Netlify: add the corresponding SvelteKit adapter and set env vars
-- Docker: build and deploy the container image (plus Postgres/Redis)
-- Bare Node: `npm run build` then start with your process manager (PM2, Fly.io, etc.)
-
-> SvelteKit adapters: https://svelte.dev/docs/kit/adapters
-
-## Development Guide
-
-1. Plan data structures first; define Drizzle schema and run migrations
-2. Implement auth provider(s) with Arctic and session issuance
-3. Build Remote Functions for server-side operations (DB, cache)
-4. Compose pages using shadcn-svelte components
-5. Add optimistic UI where safe; cache with Redis where useful
-
-## References
-
-- SvelteKit & Svelte 5: see `.windsurf/docs/sveltekit.txt`
-- Drizzle ORM: see `.windsurf/docs/drizzle.txt`
-- Docker: see `.windsurf/docs/docker.txt`
-- Arctic OAuth: https://arcticjs.dev/
 
 ## License
 
