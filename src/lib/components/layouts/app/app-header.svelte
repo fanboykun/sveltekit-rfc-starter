@@ -1,10 +1,7 @@
 <script lang="ts">
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
-	import { Button } from '$lib/components/ui/button';
+	import ThemeToggler from '$lib/components/ui/theme-toggler/theme-toggler.svelte';
 	import { useBreadcrumb } from '$lib/hooks/use-breadcrumb.svelte';
-	import { MoonIcon, SunIcon } from '@lucide/svelte';
-	import { mode, toggleMode } from 'mode-watcher';
-	import { fly } from 'svelte/transition';
 	const breadcrumbs = useBreadcrumb();
 </script>
 
@@ -22,15 +19,5 @@
 			{/each}
 		</Breadcrumb.List>
 	</Breadcrumb.Root>
-	<Button size="icon" variant="ghost" onclick={toggleMode}>
-		{#if mode.current === 'dark'}
-			<div in:fly={{ y: 10, duration: 300 }}>
-				<SunIcon size="16" class="text-primary" />
-			</div>
-		{:else}
-			<div in:fly={{ y: -10, duration: 300 }}>
-				<MoonIcon size="16" class="text-primary" />
-			</div>
-		{/if}
-	</Button>
+	<ThemeToggler />
 </div>

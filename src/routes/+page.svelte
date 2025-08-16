@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import ThemeToggler from '$lib/components/ui/theme-toggler/theme-toggler.svelte';
 	import { handleLogout } from '$lib/remotes/auth/auth.remote';
 
 	let { data } = $props();
@@ -34,6 +35,7 @@
 					>Login</a
 				>
 			{/if}
+			<ThemeToggler />
 		</nav>
 	</header>
 	<div

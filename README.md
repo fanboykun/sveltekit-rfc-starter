@@ -1,5 +1,54 @@
 # SvelteKit SaaS Starter (Svelte 5 + Remote Functions)
 
+<p align="center"><strong>Launch production-ready SvelteKit apps faster — Svelte 5 runes, Remote Functions, Arctic/Lucia OAuth, Drizzle ORM, Redis, and Tailwind v4/shadcn — all wired for a Docker-first DX.</strong></p>
+
+<p align="center">
+  <a href="https://svelte.dev" title="Svelte">
+    <img src="https://cdn.simpleicons.org/svelte/FF3E00" alt="Svelte" height="28" />
+  </a>
+  &nbsp;
+  <a href="https://tailwindcss.com" title="Tailwind CSS">
+    <img src="https://cdn.simpleicons.org/tailwindcss/06B6D4" alt="Tailwind CSS" height="28" />
+  </a>
+  &nbsp;
+  <a href="https://www.shadcn-svelte.com" title="shadcn-svelte">
+    <img src="https://cdn.simpleicons.org/shadcnui/000000" alt="shadcn" height="28" />
+  </a>
+  &nbsp;
+  <a href="https://orm.drizzle.team" title="Drizzle ORM">
+    <img src="https://cdn.simpleicons.org/drizzle/F7DF1E" alt="Drizzle ORM" height="28" />
+  </a>
+  &nbsp;
+  <a href="https://www.postgresql.org" title="PostgreSQL">
+    <img src="https://cdn.simpleicons.org/postgresql/4169E1" alt="PostgreSQL" height="28" />
+  </a>
+  &nbsp;
+  <a href="https://redis.io" title="Redis">
+    <img src="https://cdn.simpleicons.org/redis/DC382D" alt="Redis" height="28" />
+  </a>
+  &nbsp;
+  <a href="https://lucia-auth.com" title="Lucia (Auth)">
+    <img src="https://cdn.simpleicons.org/lucia/000000" alt="Lucia" height="28" />
+  </a>
+  &nbsp;
+  <a href="https://www.docker.com" title="Docker">
+    <img src="https://cdn.simpleicons.org/docker/2496ED" alt="Docker" height="28" />
+  </a>
+  &nbsp;
+  <a href="https://www.typescriptlang.org" title="TypeScript">
+    <img src="https://cdn.simpleicons.org/typescript/3178C6" alt="TypeScript" height="28" />
+  </a>
+</p>
+
+## Screenshots
+
+<p align="center">
+  <img src="static/screenshots/landing.png" alt="Landing page" width="880" />
+</p>
+<p align="center">
+  <img src="static/screenshots/dashboard.png" alt="Dashboard" width="880" />
+</p>
+
 Modern SvelteKit 2 starter kit for building SaaS apps with:
 
 - Svelte 5 (runes) and SvelteKit 2
@@ -10,10 +59,6 @@ Modern SvelteKit 2 starter kit for building SaaS apps with:
 - Tailwind CSS v4 + shadcn-svelte components
 
 This repository is designed as a template to bootstrap production-ready SvelteKit apps with batteries included, strong defaults, and a clean architecture.
-
-—
-
-Badges: SvelteKit • Svelte 5 • Tailwind v4 • shadcn-svelte • Drizzle • PostgreSQL • Redis • Arctic OAuth
 
 ## Features
 
@@ -34,6 +79,8 @@ Badges: SvelteKit • Svelte 5 • Tailwind v4 • shadcn-svelte • Drizzle •
 - DB: PostgreSQL with Drizzle ORM & drizzle-kit migrations
 - Cache/Session: Redis via ioredis
 - Language/Tooling: TypeScript, ESLint, Prettier
+
+Note: Some logos (e.g., Arctic) may not be on Simple Icons; we include Lucia/OpenID as auth stand-ins.
 
 ## Project Structure
 
