@@ -26,6 +26,7 @@ declare global {
 		image: string | null;
 		userRole: UserRoleType;
 	};
+	export type MaybePromise<T> = T | Promise<T>;
 }
 
 export {};

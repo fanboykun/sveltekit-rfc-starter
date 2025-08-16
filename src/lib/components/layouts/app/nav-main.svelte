@@ -7,11 +7,11 @@
 	import { EllipsisIcon } from '@lucide/svelte';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 
-	let {
-		items
-	}: {
+	interface NavMainProps {
 		items: NavLinks[];
-	} = $props();
+	}
+
+	let { items }: NavMainProps = $props();
 	const sidebar = useSidebar();
 </script>
 

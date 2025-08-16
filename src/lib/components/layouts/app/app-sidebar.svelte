@@ -19,6 +19,13 @@
 		title: string;
 		links: (Link | ActionLink | CollapsibleLink)[];
 	};
+
+	type AppSidebarProps = {
+		user: SafeUser;
+		primaryLinks: NavLinks[];
+		secondaryLink: Link[];
+		AppLogo?: Snippet<[{ props: Record<string, unknown> }]>;
+	} & ComponentProps<typeof Sidebar.Root>;
 </script>
 
 <script lang="ts">
@@ -36,12 +43,7 @@
 		secondaryLink,
 		AppLogo,
 		...restProps
-	}: {
-		user: SafeUser;
-		primaryLinks: NavLinks[];
-		secondaryLink: Link[];
-		AppLogo?: Snippet<[{ props: Record<string, unknown> }]>;
-	} & ComponentProps<typeof Sidebar.Root> = $props();
+	}: AppSidebarProps = $props();
 </script>
 
 <Sidebar.Root bind:ref variant="inset" {...restProps}>

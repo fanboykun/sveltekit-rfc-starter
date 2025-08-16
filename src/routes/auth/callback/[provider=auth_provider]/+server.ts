@@ -11,7 +11,7 @@ export const GET = async (event: RequestEvent) => {
 	 * we already match the params, see params/auth_provider.ts
 	 * but however we should always compare it to the actual available providers
 	 */
-	const provider = event.params.rest as AuthProviderType;
+	const provider = event.params.provider as AuthProviderType;
 	if (!auth.getAvailableProviders().includes(provider))
 		return redirect(302, '/auth/login?error=Invalid provider');
 
@@ -48,6 +48,6 @@ export const GET = async (event: RequestEvent) => {
 	});
 
 	const searchParams = new URLSearchParams(data.state);
-	const redirectTo = searchParams.get('redirectTo') || '/';
+	const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 	return redirect(302, redirectTo.startsWith('/') ? redirectTo : '/');
 };

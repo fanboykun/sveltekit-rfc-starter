@@ -1,15 +1,12 @@
 <script lang="ts">
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import type { Component, ComponentProps } from 'svelte';
+	import type { ComponentProps } from 'svelte';
 	import type { Link } from './app-sidebar.svelte';
 
-	let {
-		ref = $bindable(null),
-		items,
-		...restProps
-	}: {
+	type NavSecondaryProps = {
 		items: Link[];
-	} & ComponentProps<typeof Sidebar.Group> = $props();
+	} & ComponentProps<typeof Sidebar.Group>;
+	let { ref = $bindable(null), items, ...restProps }: NavSecondaryProps = $props();
 </script>
 
 <Sidebar.Group bind:ref {...restProps}>

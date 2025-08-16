@@ -8,6 +8,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<title>Sveltekit Remote Function Starter</title>
 </svelte:head>
 
 <ModeWatcher />

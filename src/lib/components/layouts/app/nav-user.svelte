@@ -11,13 +11,12 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import { handleLogout } from '$lib/remotes/auth/auth.remote';
-	import { invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 
-	let {
-		user
-	}: {
+	interface NavUserProps {
 		user: SafeUser;
-	} = $props();
+	}
+	let { user }: NavUserProps = $props();
 
 	const sidebar = useSidebar();
 </script>
@@ -89,7 +88,7 @@
 					onclick={async () => {
 						const result = await handleLogout();
 						if ('success' in result && result.success) {
-							await invalidateAll();
+							return goto('/');
 						}
 					}}
 				>

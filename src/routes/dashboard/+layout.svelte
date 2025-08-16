@@ -8,7 +8,8 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { createBreadcrumb, setBreadcrumb } from '$lib/hooks/use-breadcrumb.svelte';
 	import { EditIcon, PlusIcon, SettingsIcon, SquareTerminalIcon, Trash2Icon } from '@lucide/svelte';
-	let { children, data } = $props();
+	import type { LayoutProps } from './$types';
+	let { children, data }: LayoutProps = $props();
 	const primaryLinks: NavLinks[] = [
 		{
 			title: 'Dashboard',
