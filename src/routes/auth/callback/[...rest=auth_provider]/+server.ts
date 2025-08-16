@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { RequestEvent } from './$types';
 import { auth } from '$lib/server/auth';
 import { Models } from '$lib/server/db/models';
-import type { AuthProviderType } from '$lib/shared/enums/enum';
+import type { AuthProviderType } from '$lib/shared/constants/enum';
 
 export const GET = async (event: RequestEvent) => {
 	if (event.locals.user) return redirect(302, '/');

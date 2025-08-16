@@ -1,4 +1,4 @@
-import { AuthProviderList } from '$lib/shared/enums/enum';
+import { AuthProviderList } from '$lib/shared/constants/enum';
 import { z } from 'zod';
 
 export function match(value: string) {

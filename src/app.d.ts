@@ -1,7 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
 import type { User } from '$lib/server/db/models/user';
-import type { UserRoleType } from '$lib/shared/enums/enum';
+import type { UserRoleType } from '$lib/shared/constants/enum';
 
 // for information about these interfaces
 declare global {
