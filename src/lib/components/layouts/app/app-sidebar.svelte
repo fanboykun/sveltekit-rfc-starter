@@ -24,6 +24,7 @@
 		user: SafeUser;
 		primaryLinks: NavLinks[];
 		secondaryLink: Link[];
+		collapsible?: 'none' | 'offcanvas' | 'icon';
 		AppLogo?: Snippet<[{ props: Record<string, unknown> }]>;
 	} & ComponentProps<typeof Sidebar.Root>;
 </script>

@@ -7,9 +7,25 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { createBreadcrumb, setBreadcrumb } from '$lib/hooks/use-breadcrumb.svelte';
-	import { EditIcon, PlusIcon, SettingsIcon, SquareTerminalIcon, Trash2Icon } from '@lucide/svelte';
+	import {
+		ChartBar,
+		EditIcon,
+		Folder,
+		LayoutDashboardIcon,
+		Loader,
+		PlusIcon,
+		Trash2Icon
+	} from '@lucide/svelte';
 	import type { LayoutProps } from './$types';
+	import { Toaster } from '$lib/components/ui/sonner/index.js';
+	import { ProgressBar, progressOnNavigate } from '$lib/components/ui/progress-bar/index.svelte';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
+	import { Button } from '$lib/components/ui/button';
+	import Settings_2 from '@lucide/svelte/icons/settings-2';
+
 	let { children, data }: LayoutProps = $props();
+
 	const primaryLinks: NavLinks[] = [
 		{
 			title: 'Dashboard',
@@ -17,7 +33,7 @@
 				{
 					label: 'Statistics',
 					url: '#',
-					icon: SquareTerminalIcon,
+					icon: ChartBar,
 					isActive: true
 				}
 			]
@@ -27,7 +43,7 @@
 			links: [
 				{
 					label: 'Report',
-					icon: SquareTerminalIcon,
+					icon: LayoutDashboardIcon,
 					isActive: true,
 					items: [
 						{
@@ -44,7 +60,7 @@
 			links: [
 				{
 					label: 'Main Projects',
-					icon: SquareTerminalIcon,
+					icon: Folder,
 					isActive: true,
 					id: '1',
 					actions: [
@@ -52,28 +68,19 @@
 							label: 'Add Project',
 							isActive: false,
 							url: '#',
-							icon: PlusIcon,
-							onclick: () => {
-								console.log('Add Project');
-							}
+							icon: PlusIcon
 						},
 						{
 							label: 'Edit Project',
 							isActive: false,
 							url: '#',
-							icon: EditIcon,
-							onclick: () => {
-								console.log('Edit Project');
-							}
+							icon: EditIcon
 						},
 						{
 							label: 'Delete Project',
 							isActive: false,
 							url: '#',
-							icon: Trash2Icon,
-							onclick: () => {
-								console.log('Delete Project');
-							}
+							icon: Trash2Icon
 						}
 					]
 				}
@@ -84,16 +91,19 @@
 		{
 			label: 'Settings',
 			url: '#',
-			icon: SettingsIcon,
+			icon: Settings_2,
 			isActive: false
 		}
 	];
 	const breadcrumb = createBreadcrumb({ label: 'Dashboard' });
 	setBreadcrumb(breadcrumb);
+	const progress = progressOnNavigate();
 </script>
 
-<Sidebar.Provider>
-	<AppSidebar user={data.user} {primaryLinks} {secondaryLink} />
+<Toaster />
+<ProgressBar processing={progress.processing} />
+<Sidebar.Provider open={data.preferences.sidebarOpen}>
+	<AppSidebar user={data.user} {primaryLinks} {secondaryLink} collapsible="icon" />
 	<Sidebar.Inset>
 		<header class="flex h-16 shrink-0 items-center gap-2">
 			<div class="flex w-full items-center gap-2 px-4">
@@ -102,13 +112,26 @@
 				<AppHeader />
 			</div>
 		</header>
-		<div class="flex flex-1 flex-col gap-4 p-4 pt-0">
+		<div
+			class="flex flex-1 flex-col gap-4 p-4 pt-0 transition-opacity duration-300 starting:opacity-0"
+		>
 			<svelte:boundary>
-				{#snippet failed()}
-					whoops, apples or bananas failed.
+				{#snippet failed(_, reset)}
+					<div class="flex h-full w-full items-center items-start justify-center">
+						<Alert.Root class="w-fit">
+							<AlertCircleIcon />
+							<Alert.Title>Error! Something went wrong</Alert.Title>
+							<Alert.Description class="flex items-center justify-between gap-2">
+								<p>Something went wrong, please try again.</p>
+								<Button onclick={reset} variant="outline" size="sm">Retry</Button>
+							</Alert.Description>
+						</Alert.Root>
+					</div>
 				{/snippet}
 				{#snippet pending()}
-					loading...
+					<div class="flex h-full w-full items-center items-start justify-center">
+						<Loader class="size-8 animate-spin" />
+					</div>
 				{/snippet}
 				{@render children?.()}
 			</svelte:boundary>
