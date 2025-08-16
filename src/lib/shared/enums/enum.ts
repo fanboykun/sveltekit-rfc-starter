@@ -8,7 +8,8 @@ export type UserRoleType =
 	(typeof import('$lib/server/db/schema/enums').userRoleEnum)['enumValues'][number];
 
 export const AuthProvider = Object.freeze({
-	GOOGLE: 'google'
+	GOOGLE: 'google',
+	GITHUB: 'github'
 }) satisfies Enum<AuthProviderType>;
 export const AuthProviderList = Object.freeze(Object.values(AuthProvider)) as [AuthProviderType];
 

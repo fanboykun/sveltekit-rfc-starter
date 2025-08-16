@@ -66,7 +66,6 @@
 							<Button
 								variant="outline"
 								onclick={() => getAuthorizationUrl('github')}
-								disabled={true}
 								type="button"
 								class="w-full"
 							>

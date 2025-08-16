@@ -51,7 +51,6 @@ export class GoogleProvider extends State implements Provider {
 		const state = props.state || generateState();
 		const codeVerifier = generateCodeVerifier();
 		const scopes = this.secrets.scopes || ['openid', 'profile', 'email'];
-		// this.#setStateAndCodeVerifierCookies(props.cookie, state, codeVerifier);
 		this.setState(props.cookie, state, codeVerifier);
 		const url = instance.createAuthorizationURL(state, codeVerifier, scopes);
 		return url;
@@ -60,7 +59,6 @@ export class GoogleProvider extends State implements Provider {
 	async getAuthenticatedUser(props: AuthorizeProps): Promise<AuthorizeResult> {
 		try {
 			const instance = this.#getInstance(props.redirectUri);
-			// const codeAndState = this.#validateCodeAndState(props.url, props.cookies);
 			const codeAndState = this.getState(props.url, props.cookies);
 			if (!codeAndState)
 				return {
@@ -69,11 +67,11 @@ export class GoogleProvider extends State implements Provider {
 				};
 			const { code, codeVerifier, state } = codeAndState;
 
-			const tokens = await instance.validateAuthorizationCode(code, codeVerifier);
+			const tokens = await instance.validateAuthorizationCode(code, codeVerifier || '');
 			const refreshToken = tokens.hasRefreshToken() ? tokens.refreshToken() : null;
 			const accessToken = tokens.accessToken();
 			const idToken = tokens.idToken();
-			const user_info = decodeIdToken(idToken) as GoogleUserClaim;
+			const claims = decodeIdToken(idToken) as GoogleUserClaim;
 
 			return {
 				success: true as const,
@@ -81,9 +79,9 @@ export class GoogleProvider extends State implements Provider {
 					user: {
 						accessToken,
 						refreshToken,
-						name: user_info.name,
-						email: user_info.email,
-						picture: user_info.picture
+						name: claims.name,
+						email: claims.email,
+						picture: claims.picture
 					},
 					state
 				}

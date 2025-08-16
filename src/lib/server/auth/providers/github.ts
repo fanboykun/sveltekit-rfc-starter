@@ -1,10 +1,11 @@
 import {
 	ArcticFetchError,
-	decodeIdToken,
 	generateCodeVerifier,
 	generateState,
 	GitHub,
-	OAuth2RequestError
+	OAuth2RequestError,
+	UnexpectedErrorResponseBodyError,
+	UnexpectedResponseError
 } from 'arctic';
 import {
 	type AuthorizeProps,
@@ -15,20 +16,17 @@ import {
 	State
 } from '../core';
 
-type GoogleUserClaim = {
-	iss: string;
-	azp: string;
-	aud: string;
-	sub: string;
-	email: string;
-	email_verified: boolean;
-	at_hash: string;
+type GithubUserClaim = {
 	name: string;
-	picture: string;
-	given_name: string;
-	family_name: string;
-	iat: number;
-	exp: number;
+	avatar_url: string;
+	email: string | null;
+};
+
+type GithubEmailsClaim = {
+	email: string;
+	primary: boolean;
+	verified: boolean;
+	visibility: string | null;
 };
 
 export class GithubProvider extends State implements Provider {
@@ -51,7 +49,6 @@ export class GithubProvider extends State implements Provider {
 		const state = props.state || generateState();
 		const codeVerifier = generateCodeVerifier();
 		const scopes = this.secrets.scopes || ['read:user', 'user:email'];
-		// this.#setStateAndCodeVerifierCookies(props.cookie, state, codeVerifier);
 		this.setState(props.cookie, state, codeVerifier);
 		const url = instance.createAuthorizationURL(state, scopes);
 		return url;
@@ -60,7 +57,6 @@ export class GithubProvider extends State implements Provider {
 	async getAuthenticatedUser(props: AuthorizeProps): Promise<AuthorizeResult> {
 		try {
 			const instance = this.#getInstance(props.redirectUri);
-			// const codeAndState = this.#validateCodeAndState(props.url, props.cookies);
 			const codeAndState = this.getState(props.url, props.cookies);
 			if (!codeAndState)
 				return {
@@ -72,34 +68,63 @@ export class GithubProvider extends State implements Provider {
 			const tokens = await instance.validateAuthorizationCode(code);
 			const refreshToken = tokens.hasRefreshToken() ? tokens.refreshToken() : null;
 			const accessToken = tokens.accessToken();
-			const idToken = tokens.idToken();
-			const user_info = decodeIdToken(idToken) as GoogleUserClaim;
-
+			const [userClaimResponse, emailClaimResponse] = await Promise.all([
+				fetch('https://api.github.com/user', {
+					headers: {
+						Authorization: `Bearer ${accessToken}`
+					}
+				}),
+				fetch('https://api.github.com/user/emails', {
+					headers: {
+						Authorization: `Bearer ${accessToken}`
+					}
+				})
+			]);
+			const [userClaim, emailClaim] = (await Promise.all([
+				userClaimResponse.json(),
+				emailClaimResponse.json()
+			])) as [GithubUserClaim, GithubEmailsClaim[]];
+			if (!userClaim.email) {
+				const email = emailClaim.find((email: GithubEmailsClaim) => email.primary)?.email;
+				if (!email)
+					return {
+						success: false as const,
+						error: 'Failed to get user info'
+					};
+				userClaim.email = email;
+			}
 			return {
 				success: true as const,
 				data: {
 					user: {
 						accessToken,
 						refreshToken,
-						name: user_info.name,
-						email: user_info.email,
-						picture: user_info.picture
+						name: userClaim.name,
+						email: userClaim.email,
+						picture: userClaim.avatar_url
 					},
 					state
 				}
 			};
 		} catch (e) {
-			if (e instanceof OAuth2RequestError) {
-				console.error('OAuth2RequestError', e);
+			if (e instanceof ArcticFetchError) {
+				// Failed to call `fetch()`
+				const cause = e.cause;
+				console.error('ArcticFetchError', cause);
 				return {
 					success: false as const,
 					error: e.message
 				};
 			}
-			if (e instanceof ArcticFetchError) {
-				// Failed to call `fetch()`
-				const cause = e.cause;
-				console.error('ArcticFetchError', cause);
+			if (e instanceof UnexpectedResponseError) {
+				console.error('UnexpectedResponseError', e);
+				return {
+					success: false as const,
+					error: e.message
+				};
+			}
+			if (e instanceof UnexpectedErrorResponseBodyError) {
+				console.error('UnexpectedErrorResponseBodyError', e);
 				return {
 					success: false as const,
 					error: e.message
