@@ -1,5 +1,5 @@
 {
-  "id": "56a13137-e2c7-4148-875a-3865777bffaf",
+  "id": "ad539879-15d1-4fd2-8683-3f5264940409",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -12,7 +12,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "email": {
           "name": "email",
@@ -127,7 +128,8 @@
       "name": "auth_provider",
       "schema": "public",
       "values": [
-        "google"
+        "google",
+        "github"
       ]
     },
     "public.user_role": {
