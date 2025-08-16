@@ -10,15 +10,13 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
+	import { handleLogout } from '$lib/remotes/auth/auth.remote';
+	import { invalidateAll } from '$app/navigation';
 
 	let {
 		user
 	}: {
-		user: {
-			name: string;
-			email: string;
-			image: string;
-		};
+		user: SafeUser;
 	} = $props();
 
 	const sidebar = useSidebar();
@@ -87,7 +85,14 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item>
+				<DropdownMenu.Item
+					onclick={async () => {
+						const result = await handleLogout();
+						if ('success' in result && result.success) {
+							await invalidateAll();
+						}
+					}}
+				>
 					<LogOutIcon />
 					Log out
 				</DropdownMenu.Item>

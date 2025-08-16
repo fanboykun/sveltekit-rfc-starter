@@ -8,12 +8,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { createBreadcrumb, setBreadcrumb } from '$lib/hooks/use-breadcrumb.svelte';
 	import { EditIcon, PlusIcon, SettingsIcon, SquareTerminalIcon, Trash2Icon } from '@lucide/svelte';
-	let { children } = $props();
-	const user = {
-		name: 'shadcn',
-		email: 'm@example.com',
-		image: '/avatars/shadcn.jpg'
-	};
+	let { children, data } = $props();
 	const primaryLinks: NavLinks[] = [
 		{
 			title: 'Dashboard',
@@ -97,7 +92,7 @@
 </script>
 
 <Sidebar.Provider>
-	<AppSidebar {user} {primaryLinks} {secondaryLink} />
+	<AppSidebar user={data.user} {primaryLinks} {secondaryLink} />
 	<Sidebar.Inset>
 		<header class="flex h-16 shrink-0 items-center gap-2">
 			<div class="flex w-full items-center gap-2 px-4">

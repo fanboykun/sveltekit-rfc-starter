@@ -37,7 +37,7 @@
 		AppLogo,
 		...restProps
 	}: {
-		user: { name: string; email: string; image: string };
+		user: SafeUser;
 		primaryLinks: NavLinks[];
 		secondaryLink: Link[];
 		AppLogo?: Snippet<[{ props: Record<string, unknown> }]>;
@@ -53,7 +53,7 @@
 						{#if AppLogo}
 							{@render AppLogo({ props })}
 						{:else}
-							<a href="##" {...props}>
+							<a href="/" {...props}>
 								<div
 									class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
 								>
