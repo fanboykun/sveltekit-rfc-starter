@@ -11,3 +11,4 @@ bun.lockb
 /docker/
 /.windsurf/
 /node_modules/
+/docker/volumes/
