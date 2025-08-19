@@ -3,8 +3,9 @@ DOCKER_BUILD_FLAGS=--progress=plain
 PG_CONTAINER_NAME=starter-postgres
 REDIS_CONTAINER_NAME=starter-redis
 DEV_COMMAND=bun --bun dev
+DB_NAME=starter
 
-.PHONY: build up down restart logs redis-flush check dev
+.PHONY: build up down restart logs redis-flush check dev db-check db-create
 
 build:
 	docker compose -f $(DOCKER_COMPOSE_FILE) build $(DOCKER_BUILD_FLAGS)
@@ -52,5 +53,22 @@ check:
 		echo "[check] All required containers are running."; \
 	fi
 
-dev: check
+dev: check db-check
 	$(DEV_COMMAND)
+
+db-check:
+	@echo "Checking if database '$(DB_NAME)' exists..."
+	@if ! docker exec -i $(PG_CONTAINER_NAME) psql -U postgres -lqt | cut -d \| -f 1 | grep -qw $(DB_NAME); then \
+		echo "Database '$(DB_NAME)' not found. Creating..."; \
+		docker exec -i $(PG_CONTAINER_NAME) psql -U postgres -c "CREATE DATABASE $(DB_NAME);" 2>/dev/null && \
+		echo "✅ Database '$(DB_NAME)' created successfully." || \
+		(echo "❌ Failed to create database."; exit 1); \
+	else \
+		echo "✅ Database '$(DB_NAME)' exists and is accessible."; \
+	fi
+
+db-create:
+	@echo "Creating database '$(DB_NAME)'..."
+	@docker exec -i $(PG_CONTAINER_NAME) psql -U postgres -c "CREATE DATABASE $(DB_NAME);" 2>/dev/null && \
+		echo "✅ Database '$(DB_NAME)' created successfully." || \
+		(echo "❌ Failed to create database. It might already exist."; exit 1)

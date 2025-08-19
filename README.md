@@ -265,6 +265,12 @@ npm run db:migrate    # apply migrations
 npm run db:studio     # optional: open drizzle studio if configured
 ```
 
+Note: `drizzle-kit migrate` does not create the database itself. Ensure the target database exists before running migrations. If you use the provided Docker setup, create it once with:
+
+```bash
+docker exec -it starter-postgres psql -U postgres -c "CREATE DATABASE starter;"
+```
+
 Use transactions for multi-step writes and create indexes for critical queries. See `.windsurf/docs/drizzle.txt` for detailed Drizzle notes.
 
 ## Redis (ioredis)
