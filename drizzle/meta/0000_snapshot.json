@@ -1,5 +1,5 @@
 {
-  "id": "ad539879-15d1-4fd2-8683-3f5264940409",
+  "id": "350ab83e-8562-45c2-994d-852a8de91bc4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -35,8 +35,7 @@
         },
         "provider": {
           "name": "provider",
-          "type": "auth_provider",
-          "typeSchema": "public",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -124,14 +123,6 @@
     }
   },
   "enums": {
-    "public.auth_provider": {
-      "name": "auth_provider",
-      "schema": "public",
-      "values": [
-        "google",
-        "github"
-      ]
-    },
     "public.user_role": {
       "name": "user_role",
       "schema": "public",

@@ -1,11 +1,10 @@
-CREATE TYPE "public"."auth_provider" AS ENUM('google', 'github');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" text NOT NULL,
 	"image" text,
 	"name" text NOT NULL,
-	"provider" "auth_provider" NOT NULL,
+	"provider" text NOT NULL,
 	"user_role" "user_role" DEFAULT 'user' NOT NULL,
 	"access_token" text NOT NULL,
 	"refresh_token" text,

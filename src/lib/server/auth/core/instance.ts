@@ -40,8 +40,6 @@ export class AuthInstance<T extends AtLeastOne<ProviderList>> {
 		const buildOrigin = () => {
 			const node_origin = process.env.ORIGIN;
 			if (node_origin) return node_origin;
-			const node_port = process.env.PORT;
-			if (node_port) return `http://localhost:${node_port}`;
 			return 'http://localhost:5173';
 		};
 		const merged = deepMerge(

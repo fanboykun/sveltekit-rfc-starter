@@ -87,11 +87,14 @@ Note: Some logos (e.g., Arctic) may not be on Simple Icons; we include Lucia/Ope
 This template follows a conventional SvelteKit layout and keeps server-only logic out of the client bundle.
 
 - `src/routes` — app routes (pages, endpoints)
-- `src/lib` — shared code (components, utils, types)
-- `src/lib/server` — server-only modules (DB, Redis, auth)
-- `src/lib/remotes` — Remote Functions definitions
+- `src/lib` — shared code (components, hooks, utils, constants)
+- `src/lib/remotes` — Remote Functions definitions (server-only)
+- `src/lib/server` — server-only modules (DB, Redis, auth, services)
 - `src/lib/server/auth` — Arctic OAuth setup (providers, session utils)
-- `src/lib/db` — Drizzle schema and client
+- `src/lib/server/db` — Drizzle schema and client
+- `src/lib/server/redis` — Redis client (ioredis)
+- `src/lib/server/services` — domain-specific server services
+- `src/lib/shared` — isomorphic utilities/constants/schemas
 - `drizzle/` — migration files
 - `static/` — static assets
 
@@ -100,34 +103,55 @@ This template follows a conventional SvelteKit layout and keeps server-only logi
 ```text
 .
 ├─ src/
-│  ├─ routes/                           # Pages & endpoints
-│  │  └─ auth/
-│  │     └─ callback/[...rest=auth_provider]/  # OAuth callback route (param matcher)
+│  ├─ routes/                                 # Pages & endpoints
+│  │  ├─ +layout.svelte                       # Root layout
+│  │  ├─ +layout.server.ts                    # Root server load (e.g., session)
+│  │  ├─ +page.svelte                         # Landing page
+│  │  ├─ auth/
+│  │  │  ├─ login/
+│  │  │  │  ├─ +page.svelte                   # Login UI
+│  │  │  │  └─ +page.server.ts                # Login server action/loader
+│  │  │  └─ callback/[provider=auth_provider]/
+│  │  │     └─ +server.ts                     # OAuth callback endpoint
+│  │  └─ dashboard/                           # Example protected area
+│  │     ├─ +layout.svelte
+│  │     ├─ +layout.server.ts
+│  │     └─ +page.svelte
 │  ├─ lib/
-│  │  ├─ components/                    # UI components (shadcn-svelte, etc.)
-│  │  │  └─ ui/button/                  # Example: Button component
-│  │  ├─ shared/
-│  │  │  └─ utils/shadcn.ts             # shadcn utilities (aliased as "utils")
+│  │  ├─ assets/                              # Images/icons used by components
+│  │  ├─ components/                          # UI components (shadcn-svelte, layouts)
+│  │  ├─ hooks/                               # Utility hooks (Svelte 5 runes aware)
 │  │  ├─ remotes/
-│  │  │  └─ auth/auth.remote.ts         # Remote Functions for auth (login/logout)
-│  │  ├─ server/
-│  │  │  ├─ auth/                       # Auth module (Arctic + sessions)
-│  │  │  │  ├─ core/                    # Auth core types, instance, base session
-│  │  │  │  ├─ providers/               # Google/GitHub providers
-│  │  │  │  └─ sessions/redis-session.ts# Redis session manager
-│  │  │  ├─ db/                         # Drizzle client & models
-│  │  │  └─ redis/                      # Redis client
-│  │  └─ params/                        # Route param matchers (e.g., auth_provider)
-│  ├─ hooks.server.ts                   # Init + set user in locals from session
-│  └─ app.d.ts                          # App Locals/types
-├─ drizzle/                              # SQL migrations
+│  │  │  └─ auth/auth.remote.ts               # Remote Functions (login/logout)
+│  │  ├─ server/                              # Server-only modules
+│  │  │  ├─ auth/
+│  │  │  │  ├─ core/                          # Auth core types/config/instance
+│  │  │  │  ├─ providers/                     # Google/GitHub providers
+│  │  │  │  ├─ sessions/                      # Redis session manager
+│  │  │  │  └─ index.ts                       # Auth entry point
+│  │  │  ├─ db/                               # Drizzle client & schema
+│  │  │  ├─ middlewares/                      # Route/server middlewares/guards
+│  │  │  ├─ redis/                            # Redis client (ioredis)
+│  │  │  └─ services/                         # Domain services (server-only)
+│  │  ├─ shared/                              # Isomorphic utilities/constants/schemas
+│  │  │  ├─ constants/
+│  │  │  ├─ schemas/
+│  │  │  └─ utils/
+│  ├─ params/                                  # Route param matchers (e.g., auth_provider)
+│  │  ├─ auth_provider.ts
+│  │  ├─ numeric.ts
+│  │  ├─ slugable.ts
+│  │  └─ uuid.ts
+│  ├─ hooks.server.ts                          # Init + set user in locals from session
+│  └─ app.d.ts                                 # App Locals/types
+├─ drizzle/                                    # SQL migrations
 ├─ docker/
-│  └─ docker-compose.dev.yml            # Postgres + Redis for local dev
-├─ static/                               # Static assets
-├─ components.json                       # shadcn-svelte config (aliases)
-├─ Makefile                              # Docker helpers (make up/down/dev/...)
-├─ .env.example                          # Example env vars (optional)
-└─ README.md                             # This file
+│  └─ docker-compose.dev.yml                   # Postgres + Redis for local dev
+├─ static/                                     # Static assets
+├─ components.json                             # shadcn-svelte config (aliases)
+├─ Makefile                                    # Docker helpers (make up/down/dev/...)
+├─ .env.example                                # Example env vars (copy to .env)
+└─ README.md                                   # This file
 ```
 
 Note: exact folders may evolve; the separation between client-safe and server-only code is intentional to keep secrets and heavy deps off the client.
@@ -194,19 +218,38 @@ Note: `make dev` uses Bun (DEV_COMMAND in Makefile). You can still run `npm run 
 
 ## Environment Variables
 
-Create and fill `.env` with the following (names are UPPERCASE by convention):
+Use a local `.env` (copy from `.env.example`) and set the following. Names are UPPERCASE by convention.
+
+Required for core app:
 
 - `DATABASE_URL` — PostgreSQL connection string
+  - Example (Docker dev): `postgresql://postgres:123@localhost:5432/starter`
+  - Used in: `src/lib/server/db/index.ts`, `drizzle.config.ts`
 - `REDIS_URL` — Redis connection string
-- `AUTH_SECRET` — long random string for signing the auth session cookie
-- `GOOGLE_CLIENT_ID` — Google OAuth Client ID
-- `GOOGLE_CLIENT_SECRET` — Google OAuth Client Secret
-- `GITHUB_CLIENT_ID` — GitHub OAuth Client ID
-- `GITHUB_CLIENT_SECRET` — GitHub OAuth Client Secret
-- `PORT` — optional; used to infer origin locally if set (defaults to 5173)
-- `ORIGIN` — optional; absolute origin to build callback URIs (overrides PORT)
+  - Example (Docker dev): `redis://localhost:6379`
+  - Used in: `src/lib/server/redis/redis.ts`
+- `AUTH_SECRET` — long random string to sign the auth session cookie
+  - Generate: `openssl rand -base64 32` or `bunx nanoid`
 
-Keep secrets out of the client. Read them only from server modules (`src/lib/server/**`).
+OAuth (enable providers you use):
+
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+
+Dev helper:
+
+- `MOCK_LOGIN` — if `true`, enables mock login flows for local development only, disabling the OAuth.
+
+SvelteKit env access:
+
+- Server-only: `$env/dynamic/private` (used in this repo)
+- Build-time server-only: `$env/static/private`
+- Never expose secrets to the client (`$env/static/public` is not used here)
+
+Security:
+
+- Keep secrets out of the client; read them only from server modules (`src/lib/server/**`)
+- Never commit `.env`; commit `.env.example` to document variables
 
 ## Database (Drizzle + PostgreSQL)
 
@@ -293,6 +336,7 @@ Refer to Arctic docs for provider specifics and advanced flows.
 - Export it in `src/lib/server/auth/providers/index.ts`
 - Register it in `src/lib/server/auth/index.ts` (see example above)
 - Add `<provider>` to the param matcher in `src/params/auth_provider.ts` so callbacks are accepted
+- Update the client-safe enum: add/remove the provider key in `src/lib/shared/constants/enum.ts` (`AuthProvider`). This keeps client code (UI, forms) in sync with server providers.
 
 4. Add UI and test
 

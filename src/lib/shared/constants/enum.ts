@@ -1,9 +1,10 @@
+import type { AppliableProvider } from '$lib/server/auth';
+
 type Enum<T extends string> = {
 	[K in T as Uppercase<K>]: K;
 };
 
-export type AuthProviderType =
-	(typeof import('$lib/server/db/schema/enums').authProviderEnum)['enumValues'][number];
+export type AuthProviderType = AppliableProvider;
 export type UserRoleType =
 	(typeof import('$lib/server/db/schema/enums').userRoleEnum)['enumValues'][number];
 

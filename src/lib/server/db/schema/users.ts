@@ -1,5 +1,5 @@
 import { pgTable, text, uuid, timestamp, index } from 'drizzle-orm/pg-core';
-import { authProviderEnum, userRoleEnum } from './enums';
+import { userRoleEnum } from './enums';
 
 export const users = pgTable(
 	'users',
@@ -8,7 +8,7 @@ export const users = pgTable(
 		email: text('email').notNull().unique(),
 		image: text('image'),
 		name: text('name').notNull(),
-		provider: authProviderEnum('provider').notNull(),
+		provider: text('provider').notNull(),
 		userRole: userRoleEnum('user_role').default('user').notNull(),
 		accessToken: text('access_token').notNull(),
 		refreshToken: text('refresh_token'),
