@@ -5,7 +5,7 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = ensureAuthenticated(async ({ locals: { user }, cookies }) => {
 	const sidebar = cookies.get(SIDEBAR_COOKIE_NAME);
 	const preferences = {
-		sidebarOpen: sidebar === 'true'
+		sidebarOpen: sidebar !== 'false'
 	};
 	const safeUser: SafeUser = {
 		id: user.id,

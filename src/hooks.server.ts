@@ -4,6 +4,7 @@ import redis from '$lib/server/redis/redis';
 import { auth } from '$lib/server/auth';
 import { Models } from '$lib/server/db/models';
 import { db } from '$lib/server/db';
+import { validateEnv } from '$lib/server/config/env';
 
 /**
  * Test connection to Redis and Postgres
@@ -13,6 +14,8 @@ import { db } from '$lib/server/db';
 export const init: ServerInit = async () => {
 	await redis.connect();
 	await db.$client.connect().then(() => console.log('Successfully connected to Postgres'));
+	if (validateEnv()) console.log('Env validated');
+
 	// This only available on adapter-node
 	process.on('sveltekit:shutdown', async () => {
 		await redis.disconnect();
@@ -43,7 +46,6 @@ const setUser: Handle = async ({ resolve, event }) => {
 };
 
 export const handleValidationError: HandleValidationError = ({ issues, event }) => {
-	console.log(issues);
 	return {
 		message: 'Invalid Payload',
 		traceId: event.locals.traceId,

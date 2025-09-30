@@ -10,10 +10,14 @@ export const users = pgTable(
 		name: text('name').notNull(),
 		provider: text('provider').notNull(),
 		userRole: userRoleEnum('user_role').default('user').notNull(),
-		accessToken: text('access_token').notNull(),
+		password: text('password'),
+		accessToken: text('access_token'),
 		refreshToken: text('refresh_token'),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
-		updatedAt: timestamp('updated_at').defaultNow().notNull()
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.$defaultFn(() => new Date())
+			.notNull()
 	},
 	(table) => [index('provider_idx').on(table.provider), index('user_role_idx').on(table.userRole)]
 );

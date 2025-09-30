@@ -1,3 +1,4 @@
+import { env } from '$lib/server/config/env';
 import type { LayoutServerLoadEvent } from './$types';
 
 export const load = async ({ locals }: LayoutServerLoadEvent) => {
@@ -11,5 +12,9 @@ export const load = async ({ locals }: LayoutServerLoadEvent) => {
 				userRole: user.userRole
 			}
 		: null;
-	return { user: safeUser };
+	const config = {
+		name: env('APP_NAME'),
+		description: 'Sveltekit Starter'
+	};
+	return { user: safeUser, config };
 };

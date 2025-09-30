@@ -16,10 +16,15 @@ export type AuthConfig = {
 	};
 };
 
-export type AuthProps<T extends AtLeastOne<ProviderList>> = {
-	provider: T;
-	session: (config: AuthConfig) => SessionManager;
+export type AuthProps<
+	T extends AtLeastOne<ProviderList>,
+	Plugins extends Record<string, unknown> | undefined,
+	Session extends SessionManager
+> = {
+	provider?: T;
+	session: (config: AuthConfig) => Session;
 	config?: Partial<AuthConfig>;
+	plugins?: Plugins;
 };
 
 type ProviderNames = ReturnType<
@@ -63,8 +68,8 @@ export type AuthorizeProps = {
 	redirectUri: string;
 };
 export type AuthorizeResult =
-	| { success: true; data: { user: UserFromProvider; state: string } }
-	| { success: false; error: string };
+	| { success: true; data: { user: UserFromProvider; state: string }; message?: string }
+	| { success: false; error: string; message?: string };
 
 export interface Provider {
 	getName(): ProviderNames;

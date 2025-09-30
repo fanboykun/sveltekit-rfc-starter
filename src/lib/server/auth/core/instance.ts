@@ -9,10 +9,15 @@ import type {
 	Provider
 } from './config';
 
-export class AuthInstance<T extends AtLeastOne<ProviderList>> {
-	public session: SessionManager;
-	private provider: T;
+export class AuthInstance<
+	T extends AtLeastOne<ProviderList>,
+	Plugins extends Record<string, unknown> | undefined,
+	Session extends SessionManager
+> {
+	public session: Session;
+	private provider?: T;
 	private config: Required<AuthConfig>;
+	public plugins: Plugins;
 
 	/**
 	 * Initializes a new AuthInstance.
@@ -20,10 +25,10 @@ export class AuthInstance<T extends AtLeastOne<ProviderList>> {
 	 * @param props - The dependencies and configuration required to construct the instance.
 	 * @returns A new AuthInstance configured with the provided session manager and providers.
 	 */
-	constructor(props: AuthProps<T>) {
+	constructor(props: AuthProps<T, Plugins, Session>) {
 		this.config = this.#initConfig(props.config);
 		this.session = props.session(this.config);
-
+		this.plugins = props.plugins ?? ({} as Plugins);
 		this.provider = props.provider;
 	}
 
@@ -95,7 +100,11 @@ export class AuthInstance<T extends AtLeastOne<ProviderList>> {
 	 * @returns A tuple containing the provider keys.
 	 */
 	getAvailableProviders() {
-		return Object.keys(this.provider) as [keyof T];
+		return Object.keys(this.provider ?? {}) as [keyof T];
+	}
+
+	getAvailablePlugins() {
+		return Object.keys(this.plugins ?? {}) as [keyof Plugins];
 	}
 
 	/**
@@ -114,7 +123,7 @@ export class AuthInstance<T extends AtLeastOne<ProviderList>> {
 		provider: K,
 		props: Omit<GetAuthenticationUrlProps, 'redirectUri'> & { redirectUri?: string }
 	) {
-		const selectedProvider = this.provider[provider] as Provider;
+		const selectedProvider = this.provider?.[provider] as Provider;
 		if (!selectedProvider || typeof selectedProvider.getAuthenticationUrl !== 'function')
 			throw new Error('Invalid Provider');
 
@@ -140,7 +149,7 @@ export class AuthInstance<T extends AtLeastOne<ProviderList>> {
 		provider: K,
 		props: Omit<AuthorizeProps, 'redirectUri'> & { redirectUri?: string }
 	) {
-		const selectedProvider = this.provider[provider] as Provider;
+		const selectedProvider = this.provider?.[provider] as Provider;
 		if (!selectedProvider || typeof selectedProvider.getAuthenticatedUser !== 'function')
 			throw new Error('Invalid Provider');
 

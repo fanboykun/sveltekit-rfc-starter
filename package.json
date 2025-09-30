@@ -64,6 +64,7 @@
 	},
 	"dependencies": {
 		"arctic": "^3.7.0",
+		"bcryptjs": "^3.0.2",
 		"drizzle-orm": "^0.40.0",
 		"ioredis": "^5.7.0",
 		"mode-watcher": "^1.1.0",

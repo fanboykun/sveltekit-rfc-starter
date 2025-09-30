@@ -1,7 +1,9 @@
-import { env } from '$env/dynamic/private';
+import { env } from '../config/env';
 import { AuthInstance } from './core';
+import { PasswordPlugin } from './plugins/password';
 import { GithubProvider, GoogleProvider } from './providers';
-import { RedisSession } from './sessions/redis-session';
+// import { RedisSession } from './sessions/redis-session';
+import { DatabaseSession } from './sessions/database-session';
 
 /**
  * Auth module entry.
@@ -27,19 +29,23 @@ import { RedisSession } from './sessions/redis-session';
  */
 export const auth = new AuthInstance({
 	config: {
-		secret: env.AUTH_SECRET
+		secret: env('AUTH_SECRET')
 	},
 	provider: {
 		google: new GoogleProvider({
-			clientId: env.GOOGLE_CLIENT_ID!,
-			clientSecret: env.GOOGLE_CLIENT_SECRET!
+			clientId: env('GOOGLE_CLIENT_ID'),
+			clientSecret: env('GOOGLE_CLIENT_SECRET')
 		}),
 		github: new GithubProvider({
-			clientId: env.GITHUB_CLIENT_ID!,
-			clientSecret: env.GITHUB_CLIENT_SECRET!
+			clientId: env('GITHUB_CLIENT_ID'),
+			clientSecret: env('GITHUB_CLIENT_SECRET')
 		})
 	},
-	session: (config) => new RedisSession(config)
+	// session: (config) => new RedisSession(config),
+	session: (config) => new DatabaseSession(config),
+	plugins: {
+		password: new PasswordPlugin()
+	}
 });
 /**
  * List of all applied providers.

@@ -4,14 +4,14 @@
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import CreditCardIcon from '@lucide/svelte/icons/credit-card';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
-	import SparklesIcon from '@lucide/svelte/icons/sparkles';
 
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
-	import { handleLogout } from '$lib/remotes/auth/auth.remote';
+	import { handleLogout } from '$lib/remotes/auth.remote';
 	import { goto } from '$app/navigation';
+	import { User } from '@lucide/svelte';
 
 	interface NavUserProps {
 		user: SafeUser;
@@ -64,8 +64,12 @@
 				<DropdownMenu.Separator />
 				<DropdownMenu.Group>
 					<DropdownMenu.Item>
-						<SparklesIcon />
-						Upgrade to Pro
+						{#snippet child({ props })}
+							<a href="/dashboard/profile" {...props}>
+								<User />
+								Profile
+							</a>
+						{/snippet}
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
