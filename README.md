@@ -1,6 +1,6 @@
 # SvelteKit SaaS Starter (Svelte 5 + Remote Functions)
 
-<p align="center"><strong>Launch production-ready SvelteKit apps faster — Svelte 5 runes, Remote Functions, Arctic/Lucia OAuth, Drizzle ORM, Redis, and Tailwind v4/shadcn — all wired for a Docker-first DX.</strong></p>
+<p align="center"><strong>Launch production-ready SvelteKit apps faster — Svelte 5 runes, Remote Functions, Arctic OAuth + Password Auth, Drizzle ORM, Database Sessions, and Tailwind v4/shadcn — all wired for a Docker-first DX.</strong></p>
 
 <p align="center">
   <a href="https://svelte.dev" title="Svelte">
@@ -53,34 +53,38 @@ Modern SvelteKit 2 starter kit for building SaaS apps with:
 
 - Svelte 5 (runes) and SvelteKit 2
 - Remote Functions for secure server calls from the client
-- OAuth via Arctic (arcticjs.dev)
-- Drizzle ORM + PostgreSQL
-- Redis (ioredis) for sessions/cache/queues
+- OAuth via Arctic (arcticjs.dev) + Password authentication
+- Drizzle ORM + PostgreSQL with database-backed sessions
+- Form state management with Svelte 5 runes
 - Tailwind CSS v4 + shadcn-svelte components
+- Comprehensive authentication system with pluggable providers
 
 This repository is designed as a template to bootstrap production-ready SvelteKit apps with batteries included, strong defaults, and a clean architecture.
 
 ## Features
 
-- Authentication: OAuth providers powered by Arctic (secure PKCE, state, nonce)
-- Authorization-ready: session primitives and guards you can extend
-- Data layer: Drizzle ORM with type-safe schema and migrations
-- Caching/session: Redis (ioredis)
-- Remote Functions: strongly-typed server calls from the client
-- UI: Tailwind v4 + shadcn-svelte (preconfigured)
-- DX: ESLint, Prettier, type-first code style, sensible scripts
-- Deploy anywhere: adapters (Vercel/Netlify), Docker, or any Node host
+- **Authentication**: OAuth providers powered by Arctic (secure PKCE, state, nonce) + Password authentication
+- **Session Management**: Database-backed sessions with automatic cleanup and security
+- **Authorization-ready**: Session primitives and guards you can extend
+- **Data layer**: Drizzle ORM with type-safe schema and migrations
+- **Form Management**: Advanced form state management with Svelte 5 runes and validation
+- **Remote Functions**: Strongly-typed server calls from the client with built-in error handling
+- **UI Components**: Tailwind v4 + shadcn-svelte (preconfigured) with responsive layouts
+- **Developer Experience**: ESLint, Prettier, type-first code style, sensible scripts
+- **Deploy anywhere**: Adapters (Vercel/Netlify), Docker, or any Node host
 
 ## Tech Stack
 
-- Framework: SvelteKit 2, Svelte 5 runes ($state, $derived, $effect)
-- Styling: Tailwind CSS v4, shadcn-svelte
-- Auth: Arctic (GitHub/Google/etc.)
-- DB: PostgreSQL with Drizzle ORM & drizzle-kit migrations
-- Cache/Session: Redis via ioredis
-- Language/Tooling: TypeScript, ESLint, Prettier
+- **Framework**: SvelteKit 2, Svelte 5 runes ($state, $derived, $effect)
+- **Styling**: Tailwind CSS v4, shadcn-svelte
+- **Authentication**: Arctic (GitHub/Google/etc.) + Password authentication with bcryptjs
+- **Database**: PostgreSQL with Drizzle ORM & drizzle-kit migrations
+- **Sessions**: Database-backed sessions (default) with Redis alternative available
+- **Form Management**: Custom form state management with Zod v4 validation
+- **Language/Tooling**: TypeScript, ESLint, Prettier
+- **Runtime**: Bun (recommended) or Node.js 18+
 
-Note: Some logos (e.g., Arctic) may not be on Simple Icons; we include Lucia/OpenID as auth stand-ins.
+Note: This starter uses database sessions by default for simplicity, but Redis sessions are also available for high-performance scenarios.
 
 ## Project Structure
 
@@ -89,11 +93,11 @@ This template follows a conventional SvelteKit layout and keeps server-only logi
 - `src/routes` — app routes (pages, endpoints)
 - `src/lib` — shared code (components, hooks, utils, constants)
 - `src/lib/remotes` — Remote Functions definitions (server-only)
-- `src/lib/server` — server-only modules (DB, Redis, auth, services)
-- `src/lib/server/auth` — Arctic OAuth setup (providers, session utils)
-- `src/lib/server/db` — Drizzle schema and client
-- `src/lib/server/redis` — Redis client (ioredis)
+- `src/lib/server` — server-only modules (DB, auth, services, config)
+- `src/lib/server/auth` — Arctic OAuth + Password auth setup (providers, sessions, plugins)
+- `src/lib/server/db` — Drizzle schema, client, and models
 - `src/lib/server/services` — domain-specific server services
+- `src/lib/hooks` — Svelte 5 runes-based hooks (form state, mobile detection, etc.)
 - `src/lib/shared` — isomorphic utilities/constants/schemas
 - `drizzle/` — migration files
 - `static/` — static assets
@@ -121,17 +125,22 @@ This template follows a conventional SvelteKit layout and keeps server-only logi
 │  │  ├─ assets/                              # Images/icons used by components
 │  │  ├─ components/                          # UI components (shadcn-svelte, layouts)
 │  │  ├─ hooks/                               # Utility hooks (Svelte 5 runes aware)
+│  │  │  ├─ form-state.svelte.ts              # Advanced form state management
+│  │  │  ├─ remote-sumbit-handler.svelte.ts   # Remote function submission handling
+│  │  │  └─ is-mobile.svelte.ts               # Mobile detection hook
 │  │  ├─ remotes/
-│  │  │  └─ auth/auth.remote.ts               # Remote Functions (login/logout)
+│  │  │  ├─ auth.remote.ts                    # Auth Remote Functions (OAuth/password)
+│  │  │  └─ profile.remote.ts                 # Profile management remotes
 │  │  ├─ server/                              # Server-only modules
 │  │  │  ├─ auth/
 │  │  │  │  ├─ core/                          # Auth core types/config/instance
-│  │  │  │  ├─ providers/                     # Google/GitHub providers
-│  │  │  │  ├─ sessions/                      # Redis session manager
+│  │  │  │  ├─ providers/                     # Google/GitHub OAuth providers
+│  │  │  │  ├─ plugins/                       # Password authentication plugin
+│  │  │  │  ├─ sessions/                      # Database session manager
 │  │  │  │  └─ index.ts                       # Auth entry point
-│  │  │  ├─ db/                               # Drizzle client & schema
+│  │  │  ├─ db/                               # Drizzle client, schema & models
+│  │  │  ├─ config/                           # Environment configuration
 │  │  │  ├─ middlewares/                      # Route/server middlewares/guards
-│  │  │  ├─ redis/                            # Redis client (ioredis)
 │  │  │  └─ services/                         # Domain services (server-only)
 │  │  ├─ shared/                              # Isomorphic utilities/constants/schemas
 │  │  │  ├─ constants/
@@ -146,7 +155,7 @@ This template follows a conventional SvelteKit layout and keeps server-only logi
 │  └─ app.d.ts                                 # App Locals/types
 ├─ drizzle/                                    # SQL migrations
 ├─ docker/
-│  └─ docker-compose.dev.yml                   # Postgres + Redis for local dev
+│  └─ docker-compose.dev.yml                   # PostgreSQL + Redis for local dev
 ├─ static/                                     # Static assets
 ├─ components.json                             # shadcn-svelte config (aliases)
 ├─ Makefile                                    # Docker helpers (make up/down/dev/...)
@@ -159,9 +168,9 @@ Note: exact folders may evolve; the separation between client-safe and server-on
 ## Prerequisites
 
 - JavaScript runtime: Bun (recommended) or Node.js 18+
-- Docker Desktop/Engine: required for local Postgres and Redis via Compose
+- Docker Desktop/Engine: required for local PostgreSQL via Compose (Redis optional)
 
-You do NOT need to install PostgreSQL or Redis locally; this starter runs them in Docker for you.
+You do NOT need to install PostgreSQL or Redis locally; this starter runs them in Docker for you. Redis is optional and only needed if you choose to use Redis sessions instead of the default database sessions.
 
 ## Quick Start
 
@@ -173,10 +182,10 @@ cd my-app
 bun install                 # package manager is Bun (use `bun` for scripts)
 cp .env.example .env        # then fill in environment variables (see below)
 
-# Build service images (Postgres, Redis) and create containers
+# Build service images (PostgreSQL, Redis) and create containers
 make build
 
-# Start Postgres & Redis, then run the app (Bun by default)
+# Start PostgreSQL, then run the app (Bun by default)
 make dev
 ```
 
@@ -193,14 +202,14 @@ make dev
 The `dev` target will:
 
 - Ensure required containers exist and are running (`make check`)
-- Spin up Postgres (5432) and Redis (6379) via docker-compose
+- Spin up PostgreSQL (5432) and Redis (6379) via docker-compose
 - Start the SvelteKit dev server using Bun (configured in the Makefile)
 
 Other useful targets:
 
 ```bash
 make build       # build service images (first run or when docker files change)
-make up          # start Postgres & Redis in the background
+make up          # start PostgreSQL & Redis in the background
 make down        # stop and remove containers
 make restart     # restart containers
 make logs        # follow logs for all services
@@ -211,7 +220,7 @@ Suggested local env values when using Docker services:
 
 ```bash
 DATABASE_URL=postgres://postgres:123@localhost:5432/starter
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:6379  # Optional, only if using Redis sessions
 ```
 
 Note: `make dev` uses Bun (DEV_COMMAND in Makefile). You can still run `npm run dev` if you prefer Node/npm; just ensure `make up` has started the services first.
@@ -225,11 +234,14 @@ Required for core app:
 - `DATABASE_URL` — PostgreSQL connection string
   - Example (Docker dev): `postgresql://postgres:123@localhost:5432/starter`
   - Used in: `src/lib/server/db/index.ts`, `drizzle.config.ts`
-- `REDIS_URL` — Redis connection string
-  - Example (Docker dev): `redis://localhost:6379`
-  - Used in: `src/lib/server/redis/redis.ts`
 - `AUTH_SECRET` — long random string to sign the auth session cookie
   - Generate: `openssl rand -base64 32` or `bunx nanoid`
+
+Optional (for Redis sessions):
+
+- `REDIS_URL` — Redis connection string (only needed if using Redis sessions)
+  - Example (Docker dev): `redis://localhost:6379`
+  - Used in: `src/lib/server/auth/sessions/redis-session.ts`
 
 OAuth (enable providers you use):
 
@@ -273,46 +285,89 @@ docker exec -it starter-postgres psql -U postgres -c "CREATE DATABASE starter;"
 
 Use transactions for multi-step writes and create indexes for critical queries. See `.windsurf/docs/drizzle.txt` for detailed Drizzle notes.
 
-## Redis (ioredis)
+## Session Management
 
-Use Redis for:
+This starter **currently uses database-backed sessions by default** but also includes Redis session support as an alternative. You can easily switch between them.
 
-- Session persistence (if not using cookies-only)
-- Caching expensive queries
-- Background job queues
+### Database Sessions (Current Default)
 
-Create a single connection in `src/lib/server/redis/redis.ts` and reuse it across server modules.
+Sessions are stored in the `sessions` table with automatic cleanup of expired sessions.
 
-## Authentication with Arctic
+Key benefits:
 
-This project implements OAuth using the Arctic library (OAuth 2.0/OpenID; state, nonce, and PKCE where supported). For Arctic docs, see: https://arcticjs.dev/
+- No additional Redis dependency
+- Automatic session cleanup
+- Better for serverless deployments
+- Simplified infrastructure requirements
 
-Why this approach (and not Better Auth):
+### Redis Sessions (Alternative)
+
+Redis-backed sessions are also available for high-performance scenarios:
+
+- Faster session lookups
+- Better for high-traffic applications
+- Distributed session storage
+- Built-in expiration handling
+
+To switch to Redis sessions, uncomment the Redis session manager in `src/lib/server/auth/index.ts` and set the `REDIS_URL` environment variable.
+
+Session data includes user ID, IP address, user agent, and expiration time for security tracking.
+
+## Authentication System
+
+This project implements a comprehensive authentication system with both OAuth and password-based authentication:
+
+### OAuth with Arctic
+
+OAuth providers using the Arctic library (OAuth 2.0/OpenID; state, nonce, and PKCE where supported). For Arctic docs, see: https://arcticjs.dev/
+
+### Password Authentication
+
+Built-in password authentication using bcryptjs with secure hashing and validation.
+
+Why this approach:
 
 - Full control over auth and business logic; no third-party framework taking over your app flow
-- Session storage in Redis for durability, revocation, and cross-instance scaling
+- Database session storage for durability, revocation, and simplified deployment
+- Pluggable authentication system - easily add new providers or authentication methods
 
 Implementation overview:
 
-- Providers: `src/lib/server/auth/providers/{google,github}.ts`
-- Core & wiring: `src/lib/server/auth/core/*`, `src/lib/server/auth/index.ts`
-- Sessions: `src/lib/server/auth/sessions/redis-session.ts` (signed cookie + Redis)
-- Remote functions: `src/lib/remotes/auth/auth.remote.ts` (login/logout)
-- Param matcher: `src/params/auth_provider.ts`
-- Locals: `src/hooks.server.ts` (loads `event.locals.user` from session)
+- **OAuth Providers**: `src/lib/server/auth/providers/{google,github}.ts`
+- **Password Plugin**: `src/lib/server/auth/plugins/password.ts`
+- **Core & wiring**: `src/lib/server/auth/core/*`, `src/lib/server/auth/index.ts`
+- **Sessions**: `src/lib/server/auth/sessions/database-session.ts` (signed cookie + database)
+- **Remote functions**: `src/lib/remotes/auth.remote.ts` (OAuth/password login/logout)
+- **Database models**: `src/lib/server/db/models/user.ts`
+- **Param matcher**: `src/params/auth_provider.ts`
+- **Locals**: `src/hooks.server.ts` (loads `event.locals.user` from session)
 
 Customize or extend:
 
-- Add a provider: create `src/lib/server/auth/providers/<provider>.ts`, export it, and register in `src/lib/server/auth/index.ts`; set `<PROVIDER>_CLIENT_ID/_SECRET` envs
-- Swap session store: implement a new session manager (extend BaseSession) and wire it in `index.ts`
-- Adjust guards: add/modify route guards or checks where you call remote functions or in hooks
-- Tune cookies: adjust cookie options and TTL in the session manager if your deployment needs differ
+- **Add OAuth provider**: create `src/lib/server/auth/providers/<provider>.ts`, export it, and register in `src/lib/server/auth/index.ts`; set `<PROVIDER>_CLIENT_ID/_SECRET` envs
+- **Add auth plugin**: create `src/lib/server/auth/plugins/<plugin>.ts` with login/register methods
+- **Swap session store**: implement a new session manager (extend BaseSession) and wire it in `index.ts`
+- **Adjust guards**: add/modify route guards or checks where you call remote functions or in hooks
+- **Tune cookies**: adjust cookie options and TTL in the session manager if your deployment needs differ
 
-Flow in this repo (simplified):
+Authentication flows:
 
-1. `auth.handleLogin` builds provider URL with callback `${origin}/auth/callback/<provider>` and redirects
-2. Callback validates state/nonce (and PKCE if applicable), maps user, upserts DB, issues Redis-backed session cookie
-3. `auth.handleLogout` clears Redis state and deletes cookie
+**OAuth Flow:**
+
+1. `handleProviderLogin` builds provider URL with callback `${origin}/auth/callback/<provider>` and redirects
+2. Callback validates state/nonce (and PKCE if applicable), maps user, upserts DB, issues database-backed session cookie
+3. `handleLogout` clears database session and deletes cookie
+
+**Password Flow:**
+
+1. `handlePluginLogin` validates email/password against database
+2. Creates database session on successful authentication
+3. Returns success with redirect or error message
+
+**Mock Login (dev only):**
+
+1. `handleMockLogin` creates a test user for development
+2. Bypasses OAuth flow for faster development iteration
 
 Refer to Arctic docs for provider specifics and advanced flows.
 
@@ -320,7 +375,7 @@ Refer to Arctic docs for provider specifics and advanced flows.
 
 - Always run behind HTTPS in production; set `secure` cookies and appropriate `SameSite`
 - Cookies: `httpOnly`, `sameSite=lax`, `secure` (prod); short TTLs for sensitive cookies
-- Rotate `AUTH_SECRET` if compromised; invalidate sessions in Redis on rotation
+- Rotate `AUTH_SECRET` if compromised; invalidate sessions in database on rotation
 - Keep provider scopes minimal; validate `state`/`nonce` and enforce PKCE where supported
 - Rate-limit auth endpoints and remote functions that touch auth/session
 
@@ -357,19 +412,21 @@ Notes:
 
 ### Swap the session manager
 
-You can replace Redis-backed sessions with your own storage by implementing a new manager.
+You can replace database-backed sessions with your own storage (Redis, file system, etc.) by implementing a new manager.
 
 Steps:
 
-1. Implement a manager
+1. **Implement a manager**
    - Create `src/lib/server/auth/sessions/<name>-session.ts`
    - Extend `BaseSession` and implement: `getSession`, `setSession`, `deleteSession`
    - Respect cookie settings from `BaseSession` (name, `httpOnly`, `sameSite`, `secure`)
-2. Wire it up
+2. **Wire it up**
    - In `src/lib/server/auth/index.ts`, import your manager and pass an instance to `AuthInstance`
    - Adjust env vars as needed (e.g., connection strings)
-3. Migrate data (if needed)
+3. **Migrate data (if needed)**
    - If changing stores in production, consider a short dual-read period or invalidate old sessions
+
+The current `DatabaseSession` implementation provides a good reference for the interface.
 
 ## Remote Functions
 
@@ -379,7 +436,80 @@ We use SvelteKit Remote Functions to call server code from the client safely and
 - Where: `src/lib/remotes/*` (server-only code that never ships to the browser).
 - How: invoked via SvelteKit’s built-in remote-call mechanism; not exposed as public REST routes.
 
-See `.windsurf/docs/sveltekit.txt` for a concise reference to SvelteKit 2 Remote Functions.
+### Remote Response System
+
+The starter includes a comprehensive response system (`src/lib/shared/utils/remote-response.ts`) with standardized response types:
+
+- `RemoteResponse.success()` - Success with data
+- `RemoteResponse.failure()` - Failure with error details
+- `RemoteResponse.go()` - Redirect response
+- `RemoteResponse.fail()` - SvelteKit fail response
+- `RemoteResponse.redirect()` - SvelteKit redirect
+- `RemoteResponse.error()` - SvelteKit error
+
+### Remote Submit Handler
+
+The `remoteSubmitHandler` hook (`src/lib/hooks/remote-sumbit-handler.svelte.ts`) provides:
+
+- Loading states with `processing` reactive variable
+- Automatic toast notifications
+- Error handling and retry logic
+- Request cancellation with AbortController
+- Redirect handling for successful operations
+
+Example usage:
+
+```typescript
+const submitHandler = remoteSubmitHandler({
+	onSubmit: async ({ signal, cancel, toast }) => {
+		return () => handleLogin({ email, password });
+	},
+	onSuccess: (data) => {
+		// Handle success
+	},
+	onFailure: (error) => {
+		// Handle failure
+	}
+});
+```
+
+## Form Management
+
+The starter includes a powerful form state management system built with Svelte 5 runes and Zod v4 validation.
+
+### Form State Hook
+
+`createFormState` (`src/lib/hooks/form-state.svelte.ts`) provides:
+
+- **Reactive validation** with Zod v4 schemas
+- **Field-level error handling** with `aria-invalid` attributes
+- **Touch tracking** for better UX
+- **Custom attributes** for form fields
+- **Real-time validation** on input/blur events
+
+Example usage:
+
+```typescript
+const formState = createFormState({
+	schema: z.object({
+		email: z.string().email(),
+		password: z.string().min(8)
+	}),
+	initial: { email: '', password: '' },
+	attribute: {
+		email: createAttribute({ type: 'email', required: true }),
+		password: createAttribute({ type: 'password', required: true })
+	}
+});
+```
+
+### Form Features
+
+- **Validation states**: `hasErrors`, `canSubmit`, `hasTouched`
+- **Error management**: `addErrors`, `setErrors`, `resetError`
+- **Value management**: `setValue` with optional validation
+- **Schema updates**: `updateSchema` for dynamic forms
+- **Custom error handling**: Support for server-side validation errors
 
 ## UI: Tailwind v4 + shadcn-svelte
 
