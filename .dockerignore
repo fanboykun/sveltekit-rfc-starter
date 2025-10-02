@@ -12,6 +12,8 @@ generated
 generated/*
 generated/prisma/*
 /docker/volumes/*
+/dist
+/dev-dist
 
 
 # Dependencies

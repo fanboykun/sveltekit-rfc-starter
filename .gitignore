@@ -9,6 +9,8 @@ node_modules
 /.svelte-kit
 /build
 /docker/volumes/*
+/dist
+/dev-dist
 
 # OS
 .DS_Store

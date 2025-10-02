@@ -1,30 +1,7 @@
 import { sequence } from '@sveltejs/kit/hooks';
-import { type Handle, type HandleValidationError, type ServerInit } from '@sveltejs/kit';
-import redis from '$lib/server/redis/redis';
+import { type Handle, type HandleValidationError } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 import { Models } from '$lib/server/db/models';
-import { db } from '$lib/server/db';
-import { validateEnv } from '$lib/server/config/env';
-import { building } from '$app/environment';
-
-/**
- * Test connection to Redis and Postgres
- * Will only run once the server initializes.
- * You Might change or even disabled it depending on you adapter
- */
-export const init: ServerInit = async () => {
-	await redis.connect();
-	await db.$client.connect().then(() => console.log('Successfully connected to Postgres'));
-	if (!building) {
-		if (validateEnv()) console.log('Env validated');
-	}
-
-	// This only available on adapter-node
-	process.on('sveltekit:shutdown', async () => {
-		await redis.disconnect();
-		await db.$client.end();
-	});
-};
 
 /**
  * Usefull for tracing requests
