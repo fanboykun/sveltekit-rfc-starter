@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { toast } from 'svelte-sonner';
+	import { Toaster } from '../sonner';
 
 	let shouldShowInstallPrompt = $state(false);
 	let deferredPrompt: BeforeInstallPromptEvent | null = null;
@@ -53,3 +54,5 @@
 		deferredPrompt = null;
 	}
 </script>
+
+<Toaster />
