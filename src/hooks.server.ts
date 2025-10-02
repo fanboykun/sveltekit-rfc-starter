@@ -5,6 +5,7 @@ import { auth } from '$lib/server/auth';
 import { Models } from '$lib/server/db/models';
 import { db } from '$lib/server/db';
 import { validateEnv } from '$lib/server/config/env';
+import { building } from '$app/environment';
 
 /**
  * Test connection to Redis and Postgres
@@ -14,7 +15,9 @@ import { validateEnv } from '$lib/server/config/env';
 export const init: ServerInit = async () => {
 	await redis.connect();
 	await db.$client.connect().then(() => console.log('Successfully connected to Postgres'));
-	if (validateEnv()) console.log('Env validated');
+	if (!building) {
+		if (validateEnv()) console.log('Env validated');
+	}
 
 	// This only available on adapter-node
 	process.on('sveltekit:shutdown', async () => {
