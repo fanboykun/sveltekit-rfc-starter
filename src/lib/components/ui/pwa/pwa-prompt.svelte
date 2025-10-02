@@ -3,6 +3,7 @@
 	import { browser } from '$app/environment';
 	import { toast } from 'svelte-sonner';
 
+	let shouldShowInstallPrompt = $state(false);
 	let deferredPrompt: BeforeInstallPromptEvent | null = null;
 
 	const showInstallToast = () => {
@@ -20,18 +21,23 @@
 		});
 	};
 
+	$effect(() => {
+		if (shouldShowInstallPrompt === true) showInstallToast();
+	});
+
 	onMount(() => {
 		if (!browser) return;
 
 		// Listen for install prompt
 		window.addEventListener('beforeinstallprompt', (e) => {
 			e.preventDefault();
-			deferredPrompt = e as BeforeInstallPromptEvent;
-			showInstallToast();
+			deferredPrompt = e;
+			shouldShowInstallPrompt = true;
 		});
 
 		// Check if app is already installed
 		window.addEventListener('appinstalled', () => {
+			shouldShowInstallPrompt = false;
 			deferredPrompt = null;
 		});
 	});
@@ -39,6 +45,11 @@
 	async function installApp() {
 		if (!deferredPrompt) return;
 		deferredPrompt.prompt();
+		const { outcome } = await deferredPrompt.userChoice;
+
+		if (outcome === 'accepted') {
+			shouldShowInstallPrompt = false;
+		}
 		deferredPrompt = null;
 	}
 </script>
