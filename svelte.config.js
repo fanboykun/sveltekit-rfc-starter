@@ -1,5 +1,8 @@
-import adapter from '@sveltejs/adapter-auto';
+import adapterAuto from '@sveltejs/adapter-auto';
+import adapterVercel from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+const adapter = process.env.NODE_ENV !== 'production' ? adapterAuto : adapterVercel;
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {

@@ -66,6 +66,7 @@
 		"vitest-browser-svelte": "^0.1.0"
 	},
 	"dependencies": {
+		"@sveltejs/adapter-vercel": "^5.10.3",
 		"arctic": "^3.7.0",
 		"bcryptjs": "^3.0.2",
 		"drizzle-orm": "^0.40.0",
