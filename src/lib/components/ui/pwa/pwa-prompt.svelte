@@ -30,6 +30,7 @@
 		if (typeof window === 'undefined') return;
 		const pwaInstall = force ? fallback : getInstallPrompt();
 		window.localStorage.setItem(pwaLocalStoragekey, JSON.stringify({ ...fallback, ...pwaInstall }));
+		if (force) window.location.reload();
 	}
 	function updateInstallPrompt(prompt: Partial<PwaInstall>) {
 		if (typeof window === 'undefined') return;
