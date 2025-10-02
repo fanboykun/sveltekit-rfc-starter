@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	interface PwaInstall {
 		count: number;
-		outcome?: 'accepted' | 'dismissed';
+		outcome: 'accepted' | 'dismissed' | '';
 		installed: boolean;
 		platform: string;
 		lastPrompt: Date;
@@ -18,7 +18,7 @@
 	const fallback: PwaInstall = {
 		count: 0,
 		installed: false,
-		outcome: undefined,
+		outcome: '',
 		platform: 'web',
 		lastPrompt: new Date()
 	};
@@ -67,12 +67,13 @@
 	function shouldShowInstallToast(prompt: PwaInstall) {
 		if (prompt.installed) return false;
 		if (prompt.count >= 3) return false;
-		if (
-			prompt.outcome === 'dismissed' &&
-			new Date().getTime() - prompt.lastPrompt.getTime() > 1000 * 60 * 60 * 24
-		)
-			return true;
-		return false;
+		if (prompt.outcome === 'accepted') return false;
+		if (prompt.outcome === 'dismissed') {
+			// Only show again after 24 hours
+			return new Date().getTime() - prompt.lastPrompt.getTime() > 1000 * 60 * 60 * 24;
+		}
+		// Show for first time or other states
+		return true;
 	}
 
 	onMount(() => {
