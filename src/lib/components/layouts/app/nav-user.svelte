@@ -1,8 +1,5 @@
 <script lang="ts">
-	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
-	import BellIcon from '@lucide/svelte/icons/bell';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
-	import CreditCardIcon from '@lucide/svelte/icons/credit-card';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
@@ -11,7 +8,8 @@
 	import { useSidebar } from '$lib/components/ui/sidebar/index.js';
 	import { handleLogout } from '$lib/remotes/auth.remote';
 	import { goto } from '$app/navigation';
-	import { User } from '@lucide/svelte';
+	import { Download, User } from '@lucide/svelte';
+	import { prepareInstallPromt } from '$lib/components/ui/pwa/pwa-prompt.svelte';
 
 	interface NavUserProps {
 		user: SafeUser;
@@ -74,17 +72,9 @@
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
 				<DropdownMenu.Group>
-					<DropdownMenu.Item>
-						<BadgeCheckIcon />
-						Account
-					</DropdownMenu.Item>
-					<DropdownMenu.Item>
-						<CreditCardIcon />
-						Billing
-					</DropdownMenu.Item>
-					<DropdownMenu.Item>
-						<BellIcon />
-						Notifications
+					<DropdownMenu.Item onclick={() => prepareInstallPromt(true)}>
+						<Download />
+						Install
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
