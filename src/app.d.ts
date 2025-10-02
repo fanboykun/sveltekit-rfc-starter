@@ -45,6 +45,11 @@ declare global {
 	export type Enums = {
 		[K in keyof EnumSchema as SplitStr<Capitalize<K>, 'Enum'>]: EnumSchema[K]['enumValues'][number];
 	};
+	interface BeforeInstallPromptEvent extends Event {
+		readonly platforms: string[];
+		readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+		prompt(): Promise<void>;
+	}
 }
 
 export {};
