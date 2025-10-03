@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -8,9 +9,15 @@
 	import { Eye, EyeOff } from '@lucide/svelte';
 	import z from 'zod';
 
+	// remove this in production
+	const defaultUserPayload = {
+		email: 'admin@admin.com',
+		password: 'Admin123'
+	};
 	let { state: s, plugins }: { state?: string; plugins?: ['password'] } = $props();
 
 	const formState = createFormState({
+		initial: dev ? defaultUserPayload : undefined,
 		schema: z.object({
 			email: z.string({ error: 'Invalid Email' }).email(),
 			password: z.string({ error: 'Invalid Password' }).min(4).max(255)

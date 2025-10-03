@@ -17,7 +17,7 @@ export default defineConfig({
 			includeAssets: ['favicon.svg'],
 			pwaAssets,
 			workbox: {
-				globPatterns: ['client/**/*.{js,css,html,ico,png,svg,webp,woff,woff2}']
+				globPatterns: ['client/**/*.{js,css,html,ico,png,svg,webp,woff,woff2,json,webmanifest}']
 			},
 			manifest: {
 				name: 'SvelteKit RFC Starter',
