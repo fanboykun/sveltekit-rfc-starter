@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MockLogin from '../(components)/mock-login.svelte';
-	import PasswordLogin from '../(components)/password-login.svelte';
+	import PasswordRegister from '../(components)/password-register.svelte';
 	import SocialLogin from '../(components)/social-login.svelte';
 	import { page } from '$app/state';
 	import { Separator } from '$lib/components/ui/separator';
@@ -20,7 +20,7 @@
 			<MockLogin />
 		{:else}
 			{#if data.plugins?.length}
-				<PasswordLogin plugins={data.plugins} />
+				<PasswordRegister plugins={data.plugins} />
 			{/if}
 			{#if data.plugins?.length && data.providers?.length}
 				<div class="flex items-center gap-2">
@@ -32,8 +32,8 @@
 			{#if data.providers?.length}
 				<SocialLogin providers={data.providers} />
 			{/if}
-			<span class="-mt-3 w-full text-center text-xs"
-				>Don't have an account? <a href="/auth/register" class="underline">Sign up</a></span
+			<span class="-mt-2 w-full text-center text-xs"
+				>Already have an account? <a href="/auth/login" class="underline">Sign in</a></span
 			>
 		{/if}
 	</div>

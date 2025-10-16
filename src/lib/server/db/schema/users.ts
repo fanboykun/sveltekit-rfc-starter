@@ -13,6 +13,7 @@ export const users = pgTable(
 		password: text('password'),
 		accessToken: text('access_token'),
 		refreshToken: text('refresh_token'),
+		emailVerifiedAt: timestamp('email_verified_at'),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at')
 			.defaultNow()

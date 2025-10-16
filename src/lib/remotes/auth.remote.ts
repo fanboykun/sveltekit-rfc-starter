@@ -115,3 +115,84 @@ export const handlePluginLogin = command(
 		});
 	}
 );
+
+export const handlePasswordRegister = command(
+	z.object({
+		state: z.string().optional(),
+		payload: z
+			.object({
+				name: z.string().min(3),
+				email: z.string({ error: 'Invalid Email' }).email(),
+				password: z.string({ error: 'Invalid Password' }).min(4).max(255),
+				confirmPassword: z.string({ error: 'Invalid Password' }).min(4).max(255)
+			})
+			.refine((data) => data.password === data.confirmPassword, {
+				message: 'Passwords do not match',
+				path: ['confirmPassword']
+			})
+	}),
+	async ({ payload }) => {
+		const { locals, url, cookies } = getRequestEvent();
+		if (locals.user) {
+			return RemoteResponse.failure({ message: 'User already logged in', error: {} });
+		}
+		const registerResult = await auth.plugins.password.register({ ...payload, cookies, url });
+		if (!registerResult.success) {
+			return RemoteResponse.failure({ message: registerResult.error, error: {} });
+		}
+
+		const { expiration } = registerResult.data.verification;
+		return RemoteResponse.go({
+			location: `/auth/verify?expiration=${expiration.toISOString()}`,
+			message: 'Verification Email Sent'
+		});
+	}
+);
+
+export const sendVerificationEmail = command(
+	z.object({ email: z.email().optional() }),
+	async ({ email: em }) => {
+		const { cookies, url, locals } = getRequestEvent();
+		const email = locals.user?.email ?? em ?? cookies.get('verification');
+		if (!email)
+			return RemoteResponse.failure({ message: 'Verification email not found', error: {} });
+		const user = locals.user ?? (await new Models.User().findByEmail(email));
+		if (!user) return RemoteResponse.failure({ message: 'User not found', error: {} });
+		if (user.emailVerifiedAt)
+			return RemoteResponse.go({ location: '/dashboard', message: 'User already verified' });
+		const verificationResult = await auth.plugins.password.refreshVerificationEmail({
+			url,
+			email,
+			userId: user.id,
+			cookies
+		});
+		if (!verificationResult.success) {
+			return RemoteResponse.failure({ message: verificationResult.error, error: {} });
+		}
+		const { expiration } = verificationResult.data.verification;
+		return RemoteResponse.success({ message: 'Verification email sent', data: { expiration } });
+	}
+);
+
+export const handleVerifyEmail = command(z.object({ token: z.string() }), async ({ token }) => {
+	const { locals, cookies, getClientAddress, request } = getRequestEvent();
+	if (locals.user?.emailVerifiedAt) {
+		return RemoteResponse.go({ location: '/dashboard', message: 'User already verified' });
+	}
+	const verificationResult = await auth.plugins.password.verify({ cookies, token });
+	if (!verificationResult.success) {
+		return RemoteResponse.failure({ message: verificationResult.error, error: {} });
+	}
+	await auth.session.setSession({
+		cookies,
+		data: {
+			userId: verificationResult.data.user.id,
+			ipAddress: getClientAddress() || '0.0.0.0',
+			userAgent: request.headers.get('user-agent') || 'Unknown'
+		}
+	});
+	return RemoteResponse.go({
+		location: '/dashboard',
+		message: 'Login Successfull'
+	});
+});

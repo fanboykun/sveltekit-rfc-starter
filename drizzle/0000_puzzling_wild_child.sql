@@ -9,6 +9,7 @@ CREATE TABLE "users" (
 	"password" text,
 	"access_token" text,
 	"refresh_token" text,
+	"email_verified_at" timestamp,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
@@ -22,6 +23,18 @@ CREATE TABLE "sessions" (
 	"expires_at" timestamp NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "verifications " (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"email" text NOT NULL,
+	"token" text NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "verifications _email_unique" UNIQUE("email"),
+	CONSTRAINT "verifications _token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
 CREATE INDEX "provider_idx" ON "users" USING btree ("provider");--> statement-breakpoint
