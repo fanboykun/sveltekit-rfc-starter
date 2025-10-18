@@ -248,10 +248,6 @@ OAuth (enable providers you use):
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
 
-Dev helper:
-
-- `MOCK_LOGIN` — if `true`, enables mock login flows for local development only, disabling the OAuth.
-
 SvelteKit env access:
 
 - Server-only: `$env/dynamic/private` (used in this repo)

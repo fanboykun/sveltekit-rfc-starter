@@ -12,6 +12,9 @@ export const handleMockLogin = command(
 		state: z.string().optional()
 	}),
 	async ({ name, email, state }) => {
+		if (!auth.hasFeature('mockLogin')) {
+			return RemoteResponse.failure({ message: 'Mock login is disabled', error: {} });
+		}
 		const { locals, cookies, getClientAddress, request } = getRequestEvent();
 
 		if (locals.user) {
@@ -132,19 +135,41 @@ export const handlePasswordRegister = command(
 			})
 	}),
 	async ({ payload }) => {
-		const { locals, url, cookies } = getRequestEvent();
+		const { locals, url, cookies, getClientAddress, request } = getRequestEvent();
 		if (locals.user) {
 			return RemoteResponse.failure({ message: 'User already logged in', error: {} });
 		}
-		const registerResult = await auth.plugins.password.register({ ...payload, cookies, url });
+		const registerResult = await auth.plugins.password.register({
+			...payload,
+			cookies,
+			url,
+			emailVerification: auth.hasFeature('emailVerification')
+		});
 		if (!registerResult.success) {
 			return RemoteResponse.failure({ message: registerResult.error, error: {} });
 		}
 
-		const { expiration } = registerResult.data.verification;
+		if (auth.hasFeature('emailVerification')) {
+			if (!registerResult.data.verification) {
+				return RemoteResponse.failure({ message: 'Verification failed', error: {} });
+			}
+			return RemoteResponse.go({
+				location: `/auth/verify`,
+				message: 'Verification Email Sent'
+			});
+		}
+
+		await auth.session.setSession({
+			cookies,
+			data: {
+				userId: registerResult.data.user.id,
+				ipAddress: getClientAddress() || '0.0.0.0',
+				userAgent: request.headers.get('user-agent') || 'Unknown'
+			}
+		});
 		return RemoteResponse.go({
-			location: `/auth/verify?expiration=${expiration.toISOString()}`,
-			message: 'Verification Email Sent'
+			location: '/dashboard',
+			message: 'Login Successfull'
 		});
 	}
 );
@@ -152,8 +177,11 @@ export const handlePasswordRegister = command(
 export const sendVerificationEmail = command(
 	z.object({ email: z.email().optional() }),
 	async ({ email: em }) => {
+		if (!auth.hasFeature('emailVerification')) {
+			return RemoteResponse.failure({ message: 'Email verification is disabled', error: {} });
+		}
 		const { cookies, url, locals } = getRequestEvent();
-		const email = locals.user?.email ?? em ?? cookies.get('verification');
+		const email = locals.user?.email ?? em;
 		if (!email)
 			return RemoteResponse.failure({ message: 'Verification email not found', error: {} });
 		const user = locals.user ?? (await new Models.User().findByEmail(email));
@@ -170,11 +198,17 @@ export const sendVerificationEmail = command(
 			return RemoteResponse.failure({ message: verificationResult.error, error: {} });
 		}
 		const { expiration } = verificationResult.data.verification;
-		return RemoteResponse.success({ message: 'Verification email sent', data: { expiration } });
+		return RemoteResponse.success({
+			message: 'Verification email sent',
+			data: { expiration: Date.now() - expiration.getTime() }
+		});
 	}
 );
 
 export const handleVerifyEmail = command(z.object({ token: z.string() }), async ({ token }) => {
+	if (!auth.hasFeature('emailVerification')) {
+		return RemoteResponse.failure({ message: 'Email verification is disabled', error: {} });
+	}
 	const { locals, cookies, getClientAddress, request } = getRequestEvent();
 	if (locals.user?.emailVerifiedAt) {
 		return RemoteResponse.go({ location: '/dashboard', message: 'User already verified' });

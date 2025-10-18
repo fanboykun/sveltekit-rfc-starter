@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { Toaster } from '$lib/components/ui/sonner';
 	import { Folders } from '@lucide/svelte';
 
 	let { children } = $props();
 </script>
 
-<Toaster position="top-center" richColors closeButton />
 <div class="grid min-h-svh lg:grid-cols-2">
 	<div class="flex flex-col gap-4 p-6 md:p-10">
 		<div class="flex justify-center gap-2 md:justify-start">

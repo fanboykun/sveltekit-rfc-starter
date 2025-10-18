@@ -16,6 +16,13 @@ export type AuthConfig = {
 	};
 };
 
+export type AuthFeature = {
+	emailVerification: boolean;
+	withRegister: boolean;
+	withForgotPassword: boolean;
+	mockLogin: boolean;
+};
+
 export type AuthProps<
 	T extends AtLeastOne<ProviderList>,
 	Plugins extends Record<string, unknown> | undefined,
@@ -25,6 +32,7 @@ export type AuthProps<
 	session: (config: AuthConfig) => Session;
 	config?: Partial<AuthConfig>;
 	plugins?: Plugins;
+	feature?: Partial<AuthFeature>;
 };
 
 type ProviderNames = ReturnType<

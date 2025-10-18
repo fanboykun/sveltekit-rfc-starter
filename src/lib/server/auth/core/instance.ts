@@ -1,6 +1,6 @@
 import { dev } from '$app/environment';
 import { deepMerge, type AtLeastOne } from './utils';
-import type { ProviderList, SessionManager } from './config';
+import type { AuthFeature, ProviderList, SessionManager } from './config';
 import type {
 	AuthConfig,
 	AuthProps,
@@ -18,6 +18,12 @@ export class AuthInstance<
 	private provider?: T;
 	private config: Required<AuthConfig>;
 	public plugins: Plugins;
+	private feature: AuthFeature = {
+		emailVerification: false,
+		withRegister: false,
+		withForgotPassword: false,
+		mockLogin: false
+	};
 
 	/**
 	 * Initializes a new AuthInstance.
@@ -30,6 +36,7 @@ export class AuthInstance<
 		this.session = props.session(this.config);
 		this.plugins = props.plugins ?? ({} as Plugins);
 		this.provider = props.provider;
+		this.feature = { ...this.feature, ...props.feature };
 	}
 
 	/**
@@ -158,5 +165,17 @@ export class AuthInstance<
 			url: props.url,
 			redirectUri: props.redirectUri || this.#setCallbackUri(selectedProvider)
 		});
+	}
+
+	getFeature() {
+		return this.feature;
+	}
+
+	hasFeature(feature: keyof AuthFeature) {
+		return this.feature[feature];
+	}
+
+	hasPlugin(plugin: keyof Plugins) {
+		return this.plugins && plugin in this.plugins;
 	}
 }

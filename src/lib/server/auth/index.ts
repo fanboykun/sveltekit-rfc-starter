@@ -31,6 +31,11 @@ export const auth = new AuthInstance({
 	config: {
 		secret: env('AUTH_SECRET')
 	},
+	feature: {
+		withRegister: true,
+		withForgotPassword: true,
+		emailVerification: true
+	},
 	provider: {
 		google: new GoogleProvider({
 			clientId: env('GOOGLE_CLIENT_ID'),

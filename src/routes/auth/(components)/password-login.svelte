@@ -14,7 +14,13 @@
 		email: 'admin@admin.com',
 		password: 'Admin123'
 	};
-	let { state: s, plugins }: { state?: string; plugins?: ['password'] } = $props();
+	interface Props {
+		state?: string;
+		plugins?: ['password'];
+		withForgotPassword: boolean;
+	}
+
+	let { state: s, plugins, withForgotPassword }: Props = $props();
 
 	const formState = createFormState({
 		initial: dev ? defaultUserPayload : undefined,
@@ -54,9 +60,11 @@
 		<div class="grid gap-3">
 			<div class="flex items-center">
 				<Label for="password">Password</Label>
-				<a href="##" class="ml-auto text-xs underline-offset-4 hover:underline">
-					Forgot your password?
-				</a>
+				{#if withForgotPassword}
+					<a href="##" class="ml-auto text-xs underline-offset-4 hover:underline">
+						Forgot your password?
+					</a>
+				{/if}
 			</div>
 			<div class="relative">
 				<Input

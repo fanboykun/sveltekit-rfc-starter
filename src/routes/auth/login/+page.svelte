@@ -20,7 +20,10 @@
 			<MockLogin />
 		{:else}
 			{#if data.plugins?.length}
-				<PasswordLogin plugins={data.plugins} />
+				<PasswordLogin
+					withForgotPassword={data.feature.withForgotPassword}
+					plugins={data.plugins}
+				/>
 			{/if}
 			{#if data.plugins?.length && data.providers?.length}
 				<div class="flex items-center gap-2">
@@ -32,9 +35,11 @@
 			{#if data.providers?.length}
 				<SocialLogin providers={data.providers} />
 			{/if}
-			<span class="-mt-3 w-full text-center text-xs"
-				>Don't have an account? <a href="/auth/register" class="underline">Sign up</a></span
-			>
+			{#if data.feature.withRegister}
+				<span class="-mt-3 w-full text-center text-xs"
+					>Don't have an account? <a href="/auth/register" class="underline">Sign up</a></span
+				>
+			{/if}
 		{/if}
 	</div>
 </div>

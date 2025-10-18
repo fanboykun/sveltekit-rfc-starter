@@ -6,9 +6,14 @@ import * as schema from '$lib/server/db/schema';
 import type { Cookies } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { resend } from '$lib/server/integrations/email/resend';
+import z from 'zod';
 
 export class PasswordPlugin {
 	private options: { readonly saltRounds: number };
+	public verificationCookieSchema = z.object({
+		email: z.email(),
+		expiration: z.coerce.date()
+	});
 	constructor(options?: { readonly saltRounds?: number }) {
 		this.options = deepMerge(
 			PasswordPlugin.getHashingOptions(),
@@ -57,13 +62,15 @@ export class PasswordPlugin {
 		password,
 		name,
 		cookies,
-		url
+		url,
+		emailVerification
 	}: {
 		email: string;
 		password: string;
 		name: string;
 		cookies: Cookies;
 		url: URL;
+		emailVerification: boolean;
 	}) {
 		const user = await new Models.User().findByEmail(email);
 		if (user) return { success: false as const, error: 'User already exists' };
@@ -81,20 +88,28 @@ export class PasswordPlugin {
 				success: false as const,
 				error: 'Failed to create user'
 			};
-
-		const verification = await this.createVerfication({
-			cookies,
-			email,
-			userId: createdUser.id
-		});
-		if (!verification) return { success: false as const, error: 'Failed to create verification' };
-		const verificationLink = `${url.origin}/auth/verify?token=${verification.token}`;
-		const sendEmailVerificationResult = await this.sendVerificationEmail({
-			email,
-			link: verificationLink
-		});
-		if (!sendEmailVerificationResult.success)
-			return { success: false as const, error: 'Failed to send verification email' };
+		let verificationResult: { token: string; expiration: Date; link: string } | null = null;
+		if (emailVerification === true) {
+			const verification = await this.createVerfication({
+				cookies,
+				email,
+				userId: createdUser.id
+			});
+			if (!verification) return { success: false as const, error: 'Failed to create verification' };
+			const verificationLink = `${url.origin}/auth/verify?token=${verification.token}`;
+			const sendEmailVerificationResult = await this.sendVerificationEmail({
+				email,
+				link: verificationLink
+			});
+			if (!sendEmailVerificationResult.success) {
+				return { success: false as const, error: 'Failed to send verification email' };
+			}
+			verificationResult = {
+				token: verification.token,
+				expiration: verification.expiresAt,
+				link: verificationLink
+			};
+		}
 
 		return {
 			success: true as const,
@@ -107,11 +122,7 @@ export class PasswordPlugin {
 					email: createdUser.email,
 					picture: createdUser.image || ''
 				},
-				verification: {
-					token: verification.token,
-					expiration: verification.expiresAt,
-					link: verificationLink
-				},
+				verification: verificationResult,
 				state: ''
 			}
 		};
@@ -127,15 +138,8 @@ export class PasswordPlugin {
 		userId: string;
 	}) {
 		const now = new Date();
-		const FiveMinutesFromNow = new Date(now.setMinutes(6));
+		const FiveMinutesFromNow = new Date(now.getTime() + 6 * 60 * 1000);
 		const token = await hash(crypto.randomUUID(), this.options.saltRounds);
-		cookies.set('verification', email, {
-			httpOnly: true,
-			secure: true,
-			path: '/',
-			expires: FiveMinutesFromNow,
-			sameSite: 'strict'
-		});
 		const [created] = await db
 			.insert(schema.verifications)
 			.values({
@@ -145,6 +149,8 @@ export class PasswordPlugin {
 				userId
 			})
 			.returning();
+
+		this.setVefiricationCookie({ cookies, email, expiration: FiveMinutesFromNow });
 		return created;
 	}
 
@@ -199,18 +205,19 @@ export class PasswordPlugin {
 	}
 
 	async verify({ cookies, token }: { cookies: Cookies; token: string }) {
-		const email = cookies.get('verification');
-		if (!email) return { success: false as const, error: 'Verification failed' };
+		const verificationCookie = this.getVerificationCookie(cookies);
+		if (!verificationCookie.success)
+			return { success: false as const, error: 'No Verification Cookie Found' };
 		const [verification] = await db
 			.select()
 			.from(schema.verifications)
 			.where(eq(schema.verifications.token, token))
 			.limit(1);
-		if (!verification) return { success: false as const, error: 'Verification failed' };
-		if (verification.email !== email)
-			return { success: false as const, error: 'Verification failed' };
+		if (!verification) return { success: false as const, error: 'Verification Not Found' };
+		if (verification.email !== verificationCookie.data.email)
+			return { success: false as const, error: 'Verification Email Mismatch' };
 		if (verification.expiresAt < new Date())
-			return { success: false as const, error: 'Verification failed' };
+			return { success: false as const, error: 'Verification Expired' };
 		await db.delete(schema.verifications).where(eq(schema.verifications.token, token));
 		cookies.delete('verification', { path: '/' });
 		await db
@@ -242,5 +249,28 @@ export class PasswordPlugin {
 		});
 		if (error) return { success: false as const, error };
 		return { success: true as const, data: {} };
+	}
+
+	setVefiricationCookie({
+		cookies,
+		email,
+		expiration
+	}: {
+		cookies: Cookies;
+		email: string;
+		expiration: Date;
+	}) {
+		cookies.set('verification', JSON.stringify({ email, expiration }), {
+			httpOnly: true,
+			secure: true,
+			path: '/',
+			expires: expiration,
+			sameSite: 'lax'
+		});
+	}
+
+	getVerificationCookie(cookies: Cookies) {
+		const verificationCookie = cookies.get('verification') ?? '{}';
+		return this.verificationCookieSchema.safeParse(JSON.parse(verificationCookie));
 	}
 }
