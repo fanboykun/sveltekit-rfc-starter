@@ -2,6 +2,7 @@
 
 import type { User } from '$lib/server/db/models/user';
 import type { UserRoleType } from '$lib/shared/constants/enum';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import type z from 'zod';
 
 // for information about these interfaces
@@ -29,6 +30,17 @@ declare global {
 	};
 	export type MaybePromise<T> = T | Promise<T>;
 	export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+	export type MakeRequired<T, R extends keyof T> = Omit<T, R> & Required<Pick<T, R>>;
+	export type RequiredAll<T> = { [K in keyof T]: Required<T[K]> };
+	export type MaybeGetter<T> = T | (() => T);
+	type SingularWord<T extends string> = T extends `${infer Rest}ies`
+		? `${Rest}y`
+		: T extends `${infer Rest}s`
+			? Rest
+			: T;
+	export type SplitStr<T extends string, S extends string> = T extends `${infer Rest}${S}`
+		? Rest
+		: never;
 
 	export type Env = z.infer<(typeof import('$lib/server/config/env'))['envSchema']>;
 	export type Schemas = typeof import('$lib/server/db/schema');
